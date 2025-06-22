@@ -3,7 +3,7 @@ name: Create package documentation
 on:
   push:
     branches:
-      - main
+      #- main
       - docs
   workflow_dispatch:
 permissions:
@@ -22,10 +22,18 @@ jobs:
           pip install uv
           uv venv --python 3.12
           uv pip install .[dev]
-          uv pip install sphinx sphinx_rtd_theme myst_parser
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+      - name: Copy notebooks for docs
+        run: |
+          mkdir -p docs/source/notebooks
+          cp src/notebooks/*.ipynb docs/source/notebooks/
       - name: Sphinx build
         run: |
           source .venv/bin/activate
+          rm -rf docs/build/html  # Clean up old HTML build completely
           sphinx-build docs/source docs/build/html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

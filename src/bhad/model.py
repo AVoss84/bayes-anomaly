@@ -1,12 +1,8 @@
 from typing import List, Optional, Union
-
-# from copy import deepcopy
 import warnings
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, OutlierMixin
-
-# from sklearn.preprocessing import OneHotEncoder
 import bhad.utils as utils
 
 
