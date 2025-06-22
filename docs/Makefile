@@ -1,5 +1,6 @@
 # Minimal makefile for Sphinx documentation
 #
+.PHONY: help Makefile lint test
 
 # You can set these variables from the command line, and also
 # from the environment for the first two.
@@ -13,8 +14,6 @@ LINT_FOLDER ?= ../src/bhad
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile lint test
-
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
@@ -23,3 +22,6 @@ help:
 lint:
 	#uv run mypy $(LINT_FOLDER)
 	uv run black $(LINT_FOLDER)
+
+# Call:
+# make html
