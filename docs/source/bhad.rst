@@ -1,4 +1,4 @@
-bhad package
+BHAD package
 ============
 
 Submodules
