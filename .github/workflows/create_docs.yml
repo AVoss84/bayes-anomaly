@@ -22,12 +22,10 @@ jobs:
           pip install uv
           uv venv --python 3.12
           uv pip install .[dev]
-
       - name: Install Pandoc
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
-
       - name: Copy notebooks for docs
         run: |
           mkdir -p docs/source/notebooks
