@@ -1,4 +1,4 @@
-name: Create documentation
+name: Create package documentation
 
 on:
   push:
