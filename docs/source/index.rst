@@ -1,7 +1,7 @@
 bhad package documentation
 ==========================
 
-Welcome to the documentation for the **Bayes Anomaly** package.  
+Welcome to the documentation for the **BHAD** package, a Python package for Bayesian Anomaly Detection.  
 This guide will help you get started, understand the architecture, and use the key features.
 
 Use the menu below to navigate through the sections.

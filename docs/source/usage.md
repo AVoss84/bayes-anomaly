@@ -1,4 +1,4 @@
-# *Bayesian Histogram Anomaly Detection (BHAD)*
+# Bayesian Histogram Anomaly Detection (BHAD)
 
 Python package of the *Bayesian Histogram-based Anomaly Detection (BHAD)* algorithm as presented in [Vosseler, A. (2022): Unsupervised Insurance Fraud Prediction Based on Anomaly Detector Ensembles](https://www.researchgate.net/publication/361463552_Unsupervised_Insurance_Fraud_Prediction_Based_on_Anomaly_Detector_Ensembles) and [Vosseler, A. (2023): BHAD: Explainable anomaly detection using Bayesian histograms](https://www.researchgate.net/publication/364265660_BHAD_Explainable_anomaly_detection_using_Bayesian_histograms). The latter reference focuses also on the explainabilty aspects of the approach, namely being globally and locally explainable due to its linear structure.  
 
