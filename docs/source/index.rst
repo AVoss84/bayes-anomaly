@@ -1,18 +1,16 @@
-.. bhad-package documentation master file, created by
-   sphinx-quickstart on Sun Jun 22 13:46:41 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 bhad package documentation
-================================
+==========================
 
+Welcome to the documentation for the **Bayes Anomaly** package.  
+This guide will help you get started, understand the architecture, and use the key features.
+
+Use the menu below to navigate through the sections.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   README
-   installation
    introduction
+   installation
    bhad_modules
-   
+   README
