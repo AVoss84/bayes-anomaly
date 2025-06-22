@@ -11,6 +11,6 @@ Use the menu below to navigate through the sections.
    :caption: Contents:
 
    usage
-   introduction
    installation
+   introduction
    bhad_modules
