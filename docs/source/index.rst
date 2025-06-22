@@ -10,7 +10,7 @@ Use the menu below to navigate through the sections.
    :maxdepth: 2
    :caption: Contents:
 
+   usage
    introduction
    installation
    bhad_modules
-   usage
