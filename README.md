@@ -20,4 +20,4 @@ source .venv/bin/activate
 pip install bhad                                       
 ```
 
-Details can be found in our [documentation](https://avoss84.github.io/bayes-anomaly/).
+Please check out our [documentation](https://avoss84.github.io/bayes-anomaly/) to get started. 🙂
