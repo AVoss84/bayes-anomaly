@@ -8,7 +8,7 @@ The package was presented at *PyCon DE & PyData Berlin 2023* ([watch talk here](
 
 Install *bhad* using [*uv*](https://github.com/astral-sh/uv): 
 ```bash
-uv venv --python 3.12                         # create the virtual environment
+uv venv --python 3.12                      
 source .venv/bin/activate
 uv add bhad
 ```
@@ -37,13 +37,12 @@ from bhad.utils import Discretize
 num_cols = [....]   # names of numeric features
 cat_cols = [....]   # categorical features
 
-# Setting nbins = None infers the Bayes-optimal number of bins (=only parameter)
-# using the MAP estimate
 pipe = Pipeline(steps=[
    ('discrete', Discretize(nbins = None)),   
    ('model', BHAD(contamination = 0.01, num_features = num_cols, cat_features = cat_cols))
 ])
 ```
+Setting *nbins* to *None* infers the Bayes-optimal number of bins (=only parameter) using the MAP estimate.
 
 For a given dataset get binary model decisons and anomaly scores:
 
