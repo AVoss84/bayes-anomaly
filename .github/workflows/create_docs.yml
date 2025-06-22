@@ -19,6 +19,7 @@ jobs:
           uv pip install sphinx sphinx_rtd_theme myst_parser
       - name: Sphinx build
         run: |
+          source .venv/bin/activate
           sphinx-build docs/source docs/build/html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
