@@ -1,9 +1,10 @@
 name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - "0.*"  # Trigger on version tags like v1.0.0, v2.3.1, etc.
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - "0.*"  # Trigger on version tags like v1.0.0, v2.3.1, etc.
 
 jobs:
   build-and-upload:
@@ -26,7 +27,7 @@ jobs:
       # (A) Install your package in editable mode with the "notebook" extras (which includes pytest)
       - name: Install package + 'notebook' extras
         run: |
-          python -m pip install -e ".[notebook]"
+          python -m pip install -e ".[dev]"
 
       # (B) Run your tests
       - name: Run tests

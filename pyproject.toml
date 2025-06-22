@@ -38,10 +38,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-notebook = [
+dev = [
   "jupyter",
   "ipykernel",
-  "pytest"
+  "pytest",
+  "sphinx",
+  "sphinx_rtd_theme",
+  "myst-parser"
 ]
 
 [tool.setuptools]
