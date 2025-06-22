@@ -1,6 +1,6 @@
 import os, warnings, functools, time
 from functools import wraps
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any, Optional, Union
 import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype
@@ -31,22 +31,36 @@ def timer(func):
     return wrapper_timer
 
 
-# ---------------------------------------------
-def paste(*lists, sep: str = " ", collapse: str = None) -> List[str]:
+def paste(
+    *lists: List[Any], sep: str = " ", collapse: Optional[str] = None
+) -> Union[List[str], str]:
     """
-    Concatenate/Collapse two lists of strings, separate elements by sep.
+    Concatenates elements from multiple lists element-wise into strings, similar to R's paste function.
+
+    Args:
+        lists: One or more lists of elements to be concatenated element-wise.
+        sep (str, optional): Separator to use between elements from each list. Defaults to " ".
+        collapse (str, optional): If provided, concatenates all resulting strings into a single string using this separator. Defaults to None.
+
+    Returns:
+        List[str] or str: A list of concatenated strings if collapse is None, otherwise a single concatenated string.
+
+    Examples:
+        >>> paste(['a', 'b'], [1, 2])
+        ['a 1', 'b 2']
+        >>> paste(['a', 'b'], [1, 2], sep='-')
+        ['a-1', 'b-2']
+        >>> paste(['a', 'b'], [1, 2], collapse=', ')
+        'a 1, b 2'
     """
 
-    def reduce_concat(x, sep: str = ""):
+    def reduce_concat(x: Any, sep: str = "") -> str:
         return functools.reduce(lambda x, y: str(x) + sep + str(y), x)
 
     result = map(lambda x: reduce_concat(x, sep=sep), zip(*lists))
     if collapse is not None:
         return reduce_concat(result, sep=collapse)
     return list(result)
-
-
-# ----------------------------------------------------
 
 
 def jitter(M: int, noise_scale: float = 10**5.0, seed: int = None) -> np.array:
@@ -247,12 +261,12 @@ class Discretize(BaseEstimator, TransformerMixin):
                     max(v) + self.k * np.std(v),
                     num=self.nbins + 1,
                 )
-                bs, labels = [], ["0"]  # add -Inf as lower bound
+                bs = []  # add -Inf as lower bound
             else:
                 bounds = np.linspace(
                     self.lower, max(v) + self.k * np.std(v), num=self.nbins + 1
                 )
-                bs, labels = [], []
+                bs = []
 
             bs = [(bounds[i], bounds[i + 1]) for i in range(len(bounds) - 1)]
 
@@ -419,8 +433,7 @@ def exp_normalize(x: np.array) -> np.array:
     Returns:
         np.array: Normalized input array
     """
-    b = x.max()
-    y = np.exp(x - b)
+    y = np.exp(x - x.max())
     return y / y.sum()
 
 
@@ -429,8 +442,9 @@ def geometric_prior(
 ) -> float:
     """
     Geometric (power series) prior
+
     Args:
-        M (_type_): number of bins
+        M (int): number of bins
         gamma (float, optional): prior hyperparameter. Defaults to 0.7.
         max_M (int, optional): max value of M. Defaults to 100.
         log (bool, optional): use log prior. Defaults to True.
@@ -484,8 +498,20 @@ def accratio(x: np.array) -> np.array:
 
 def rbartsim(MCsim: int = 10**4, seed: int = None, verbose: bool = True) -> np.array:
     """
-    Sample from Bart Simpson density via Accept-Reject algorithm,
-    see e.g. Robert, Casella
+    Sample from Bart Simpson density via Accept-Reject algorithm with a normal proposal distribution.
+
+    Parameters:
+        MCsim (int): Number of Monte Carlo simulations (random draws) to perform. Default is 10**4.
+        seed (int, optional): Random seed for reproducibility. Default is None.
+        verbose (bool): If True, prints the acceptance rate. Default is True.
+
+    Returns:
+        np.array: Array of accepted random draws from the proposal distribution.
+
+    Notes:
+        - The function maximizes the acceptance ratio function `accratio` to determine the scaling constant.
+        - Uses a normal distribution (mean=0, std=1) as the proposal distribution.
+        - The acceptance ratio function `accratio` must be defined elsewhere in the code.
     """
     if seed:
         np.random.seed(seed)
@@ -521,9 +547,8 @@ class mvt2mixture:
         """
         Multivariate 2-component Student-t mixture random generator.
         Direct random sampling using the Student-t representation as a continous scale mixture distr.
-        -------
+
         Input:
-        -------
         thetas: Component-wise parameters; note that Sigma1,2 are the scale matrices of the
                 Wishart priors of the precision matrices of the Student-t's.
         gaussian: boolean, generate from Gaussian mixture if True, otherwise from Student-t
@@ -548,7 +573,7 @@ class mvt2mixture:
         self.n_samples = n_samples
         self.k = k
         self.p = p
-        m = 2  # number of mixture components
+        # m = 2  # number of mixture components
         assert (len(self.thetas["mean1"]) == k) & (
             self.thetas["Sigma1"].shape[0] == k
         ), "Number of dimensions does not match k!"

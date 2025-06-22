@@ -13,4 +13,4 @@ Use the menu below to navigate through the sections.
    introduction
    installation
    bhad_modules
-   README
+   usage
