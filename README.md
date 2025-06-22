@@ -20,48 +20,4 @@ source .venv/bin/activate
 pip install bhad                                       
 ```
 
-
-## Model usage
-
-1.) Preprocess the input data: discretize continuous features and conduct Bayesian model selection (*optional*).
-
-2.) Train the model using discrete data.
-
-For convenience these two steps can be wrapped up via a scikit-learn pipeline (*optional*). 
-
-```python
-from sklearn.pipeline import Pipeline
-from bhad.model import BHAD
-from bhad.utils import Discretize
-
-num_cols = [....]   # names of numeric features
-cat_cols = [....]   # categorical features
-
-pipe = Pipeline(steps=[
-   ('discrete', Discretize(nbins = None)),   
-   ('model', BHAD(contamination = 0.01, num_features = num_cols, cat_features = cat_cols))
-])
-```
-Setting *nbins* to *None* infers the Bayes-optimal number of bins (=only parameter) using the MAP estimate.
-
-For a given dataset get binary model decisons and anomaly scores:
-
-```python
-y_pred = pipe.fit_predict(X = dataset)        
-
-anomaly_scores = pipe.decision_function(dataset)
-```
-
-Get *global* model explanation as well as for *individual* observations:
-
-```python
-from bhad.explainer import Explainer
-
-local_expl = Explainer(bhad_obj = pipe.named_steps['model'], discretize_obj = pipe.named_steps['discrete']).fit()
-
-local_expl.get_explanation(nof_feat_expl = 5, append = False)          # individual explanations
-
-print(local_expl.global_feat_imp)                                      # global explanation
-```
-
-A detailed *toy example* using synthetic data can be found [here](https://github.com/AVoss84/bhad/blob/main/src/notebooks/Toy_Example.ipynb). An example using the Titanic dataset illustrating *model explanability* with BHAD can be found [here](https://github.com/AVoss84/bhad/blob/main/src/notebooks/Titanic_Example.ipynb).
+Details can be found in our [documentation](https://avoss84.github.io/bayes-anomaly/).

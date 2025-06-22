@@ -53,8 +53,5 @@ More examples
 
 In the following notebooks you can find examples of how to use the *bhad* package on toy and real-world datasets:
 
-.. toctree::
-   :maxdepth: 1
-
-   notebooks/Toy_Example
-   notebooks/Titanic_Example
+- `Synthetic dataset - Jupyter Notebook <notebooks/Toy_Example.ipynb>`__
+- `Titanic dataset - Jupyter Notebook <notebooks/Titanic_Example.ipynb>`__
