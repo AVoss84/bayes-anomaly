@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "bhad package"
+project = "BHAD package"
 copyright = "2025, Alexander Vosseler"
 author = "Alexander Vosseler"
 release = "0.1"

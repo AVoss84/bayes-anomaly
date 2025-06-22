@@ -26,6 +26,7 @@ jobs:
       - name: Sphinx build
         run: |
           source .venv/bin/activate
+          rm -rf docs/build/html  # Clean up old HTML build completely
           sphinx-build docs/source docs/build/html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
