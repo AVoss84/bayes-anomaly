@@ -32,7 +32,7 @@ jobs:
         run: |
           pip install uv --no-cache
           uv venv --python 3.12
-          uv pip install .[dev] --no-cache
+          uv pip install ".[dev]" --no-cache
           # uv venv --python 3.12 && uv sync --no-cache
           # uv pip install nbsphinx sphinx sphinx_rtd_theme myst-parser --no-cache
       - name: Install Pandoc
