@@ -1,0 +1,20 @@
+name: Black Lint
+
+on:
+  # push:
+  workflow_dispatch:
+
+jobs:
+  black-lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "write"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
+        with:
+          options: "--line-length=200"
+      - name: Commit generated files
+        uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
+        with:
+          commit_message: Commit modified files
