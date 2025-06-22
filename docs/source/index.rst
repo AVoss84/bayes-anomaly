@@ -13,6 +13,4 @@ Use the menu below to navigate through the sections.
    usage
    installation
    introduction
-      notebooks/Toy_Example
-      notebooks/Titanic_Example
    bhad_modules
