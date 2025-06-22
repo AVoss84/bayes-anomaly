@@ -21,7 +21,8 @@ jobs:
         run: |
           pip install uv
           uv venv --python 3.12
-          uv pip install .[dev]
+          # uv pip install .[dev]
+          uv pip install sphinx sphinx_rtd_theme myst-parser nbsphinx
       - name: Install Pandoc
         run: |
           sudo apt-get update
