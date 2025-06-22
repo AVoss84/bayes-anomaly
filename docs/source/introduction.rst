@@ -53,6 +53,6 @@ More examples
 
 In the following notebooks you can find examples of how to use the *bhad* package on toy and real-world datasets:
 
-`Synthetic dataset - Jupyter Notebook <../src/notebooks/Toy_Example.ipynb>`__
+`Synthetic dataset - Jupyter Notebook <./notebooks/Toy_Example.ipynb>`__
 
-`Titanic dataset - Jupyter Notebook <../src/notebooks/Titanic_Example.ipynb>`__
+`Titanic dataset - Jupyter Notebook <./notebooks/Titanic_Example.ipynb>`__
