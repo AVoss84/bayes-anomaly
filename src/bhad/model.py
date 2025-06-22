@@ -51,7 +51,7 @@ class BHAD(BaseEstimator, OutlierMixin):
     def __del__(self):
         class_name = self.__class__.__name__
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"BHAD(contamination = {self.contamination}, alpha = {self.alpha}, exclude_col = {self.exclude_col}, numeric_features = {self.numeric_features}, cat_features = {self.cat_features}, append_score = {self.append_score}, verbose = {self.verbose})"
 
     def _fast_bhad(self, X: pd.DataFrame) -> pd.DataFrame:
