@@ -14,8 +14,9 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv
+          uv venv --python 3.12 && uv sync --no-cache
           uv pip install .[dev]
-          uv pip install sphinx sphinx_rtd_theme myst_parser
+          # uv pip install sphinx sphinx_rtd_theme myst_parser
       - name: Sphinx build
         run: |
           sphinx-build docs/source docs/build/html
