@@ -38,10 +38,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-notebook = [
+dev = [
   "jupyter",
   "ipykernel",
-  "pytest"
+  "pytest",
+  "sphinx",
+  "sphinx_rtd_theme",
+  "myst-parser",
+  "black",
+  "isort",
+  "mypy",
 ]
 
 [tool.setuptools]
@@ -56,3 +62,15 @@ include = ["bhad*"]
 homepage = "https://github.com/AVoss84/bhad"
 repository = "https://github.com/AVoss84/bhad"
 issues = "https://github.com/AVoss84/bhad/issues"
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra"
+testpaths = [
+    "tests"
+]

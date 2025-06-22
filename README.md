@@ -1,19 +1,21 @@
 # 🔥 *Bayesian Histogram Anomaly Detection (BHAD)* 🔥
 
-Python implementation of the *Bayesian Histogram-based Anomaly Detection (BHAD)* algorithm, see [Vosseler, A. (2022): Unsupervised Insurance Fraud Prediction Based on Anomaly Detector Ensembles](https://www.researchgate.net/publication/361463552_Unsupervised_Insurance_Fraud_Prediction_Based_on_Anomaly_Detector_Ensembles) and [Vosseler, A. (2023): BHAD: Explainable anomaly detection using Bayesian histograms](https://www.researchgate.net/publication/364265660_BHAD_Explainable_anomaly_detection_using_Bayesian_histograms). The package was presented at *PyCon DE & PyData Berlin 2023* ([watch talk here](https://www.youtube.com/watch?v=_8zfgPTD-d8&list=PLGVZCDnMOq0peDguAzds7kVmBr8avp46K&index=8)) and at the *42nd International Workshop on Bayesian Inference and Maximum Entropy Methods in Science and Engineering* ([MaxEnt 2023](https://www.mdpi.com/2673-9984/9/1/1)), at Max-Planck-Institute for Plasma Physics, Garching, Germany. 
+Python implementation of the *Bayesian Histogram-based Anomaly Detection (BHAD)* algorithm, see [Vosseler, A. (2022): Unsupervised Insurance Fraud Prediction Based on Anomaly Detector Ensembles](https://www.researchgate.net/publication/361463552_Unsupervised_Insurance_Fraud_Prediction_Based_on_Anomaly_Detector_Ensembles) and [Vosseler, A. (2023): BHAD: Explainable anomaly detection using Bayesian histograms](https://www.researchgate.net/publication/364265660_BHAD_Explainable_anomaly_detection_using_Bayesian_histograms). The latter reference focuses also on the explainabilty aspects of the approach, namely being globally and locally explainable due to its linear structure.  
+
+The package was presented at *PyCon DE & PyData Berlin 2023* ([watch talk here](https://www.youtube.com/watch?v=_8zfgPTD-d8&list=PLGVZCDnMOq0peDguAzds7kVmBr8avp46K&index=8)) and at the *42nd International Workshop on Bayesian Inference and Maximum Entropy Methods in Science and Engineering* ([MaxEnt 2023](https://www.mdpi.com/2673-9984/9/1/1)), at Max-Planck-Institute for Plasma Physics, Garching, Germany. 
 
 ## Package installation
 
-We opt here for using [*uv*](https://github.com/astral-sh/uv) as a package manager due to its speed and stability, but the same installation works using *pip* with *venv* for Python 3.12: 
+Install *bhad* using [*uv*](https://github.com/astral-sh/uv): 
 ```bash
-uv venv --python 3.12                         # create the usual virtual environment
+uv venv --python 3.12                      
 source .venv/bin/activate
-uv pip install bhad
+uv add bhad
 ```
 
-Or using pip:
+Optional using pip:
 ```bash
-python3 -m venv venv deactivate
+python3 -m venv .venv
 source .venv/bin/activate
 pip install bhad                                       
 ```
@@ -35,13 +37,12 @@ from bhad.utils import Discretize
 num_cols = [....]   # names of numeric features
 cat_cols = [....]   # categorical features
 
-# Setting nbins = None infers the Bayes-optimal number of bins (=only parameter)
-# using the MAP estimate
 pipe = Pipeline(steps=[
    ('discrete', Discretize(nbins = None)),   
    ('model', BHAD(contamination = 0.01, num_features = num_cols, cat_features = cat_cols))
 ])
 ```
+Setting *nbins* to *None* infers the Bayes-optimal number of bins (=only parameter) using the MAP estimate.
 
 For a given dataset get binary model decisons and anomaly scores:
 
