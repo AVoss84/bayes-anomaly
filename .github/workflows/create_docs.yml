@@ -22,7 +22,6 @@ jobs:
           pip install uv
           uv venv --python 3.12
           uv pip install .[dev]
-          #uv pip install sphinx sphinx_rtd_theme myst_parser
 
       - name: Copy notebooks for docs
         run: |
