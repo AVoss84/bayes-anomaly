@@ -1,0 +1,1174 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulated toy data example &mdash; BHAD package 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2709fde1"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            BHAD package
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Bayesian Histogram Anomaly Detection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Package installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bhad_modules.html">bhad</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">BHAD package</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Simulated toy data example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/notebooks/Toy_Example.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Simulated-toy-data-example">
+<h1>Simulated toy data example<a class="headerlink" href="#Simulated-toy-data-example" title="Link to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bhad.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Discretize</span><span class="p">,</span> <span class="n">mvt2mixture</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bhad.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">BHAD</span>
+</pre></div>
+</div>
+</div>
+<section id="Draw-from-a-two-component-multivariate-Student-t-mixture-distribution">
+<h2>Draw from a two-component multivariate Student-t mixture distribution<a class="headerlink" href="#Draw-from-a-two-component-multivariate-Student-t-mixture-distribution" title="Link to this heading"></a></h2>
+<p>Note: Anomaly class corresponds to the minority mixture component</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">outlier_prob_true</span> <span class="o">=</span> <span class="mf">.01</span>         <span class="c1"># probab. for outlier ; should be consistent with contamination rate in your model</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">30</span>                          <span class="c1"># feature dimension</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">5</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="mi">4</span>                     <span class="c1"># sample size</span>
+
+<span class="c1"># Specify first and second moments for each component</span>
+<span class="n">bvt</span> <span class="o">=</span> <span class="n">mvt2mixture</span><span class="p">(</span><span class="n">thetas</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mean1&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="s1">&#39;mean2&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="mf">.5</span><span class="p">),</span>
+                                <span class="s1">&#39;Sigma1&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="mf">.4</span><span class="p">,</span> <span class="s1">&#39;Sigma2&#39;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="mf">.1</span><span class="p">,</span>
+                                <span class="s1">&#39;nu1&#39;</span><span class="p">:</span> <span class="mf">3.</span><span class="o">*</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;nu2&#39;</span><span class="p">:</span> <span class="mf">3.</span><span class="o">*</span><span class="n">k</span><span class="p">},</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span><span class="p">,</span> <span class="n">gaussian</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Get latent draws and observations:</span>
+<span class="c1">#------------------------------------</span>
+<span class="n">y_true</span><span class="p">,</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">bvt</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">=</span> <span class="n">N</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">outlier_prob_true</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(50000, 30)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y_true</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>    <span class="c1"># probab. latent class 1 (=anomaly)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+np.float64(0.01024)
+</pre></div></div>
+</div>
+</section>
+<section id="Visualize-your-data:">
+<h2>Visualize your data:<a class="headerlink" href="#Visualize-your-data:" title="Link to this heading"></a></h2>
+<p>Reduce dimension for visualization only:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruncatedSVD</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+
+<span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="n">X_reduce</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Plot-all-the-ground-truth-points-together-with-the-predictions">
+<h2>Plot all the ground truth points together with the predictions<a class="headerlink" href="#Plot-all-the-ground-truth-points-together-with-the-predictions" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">7</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$c_</span><span class="si">{1}</span><span class="s1">$&#39;</span><span class="p">)</span> <span class="p">;</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$c_</span><span class="si">{2}</span><span class="s1">$&#39;</span><span class="p">)</span> <span class="p">;</span><span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$c_</span><span class="si">{3}</span><span class="s1">$&#39;</span><span class="p">)</span>
+
+<span class="c1"># Plot the compressed inliers data points</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">zs</span><span class="o">=</span><span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;inliers&quot;</span><span class="p">)</span>
+
+<span class="c1"># outliers</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">zs</span><span class="o">=</span><span class="n">X_reduce</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+           <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;outliers&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_Toy_Example_10_0.png" src="../_images/notebooks_Toy_Example_10_0.png" />
+</div>
+</div>
+<p>Partition your dataset:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(33500, 30)
+(16500, 30)
+(array([0, 1]), array([33147,   353]))
+(array([0, 1]), array([16341,   159]))
+</pre></div></div>
+</div>
+<p>Use another candidate anomaly detector for comparison:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">IsolationForest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_scorer</span><span class="p">,</span> <span class="n">f1_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_selection</span>
+
+<span class="c1"># Tune hyperparameters for fair comparison</span>
+<span class="n">param_grid</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;contamination&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">outlier_prob_true</span><span class="p">],</span>
+    <span class="s1">&#39;max_features&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span>
+    <span class="s1">&#39;bootstrap&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+    <span class="s1">&#39;n_estimators&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">f1sc</span> <span class="o">=</span> <span class="n">make_scorer</span><span class="p">(</span><span class="n">f1_score</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span>
+
+<span class="n">grid_search</span> <span class="o">=</span> <span class="n">model_selection</span><span class="o">.</span><span class="n">GridSearchCV</span><span class="p">(</span>
+    <span class="n">IsolationForest</span><span class="p">(),</span>
+    <span class="n">param_grid</span><span class="p">,</span>
+    <span class="n">scoring</span><span class="o">=</span><span class="n">f1sc</span><span class="p">,</span>
+    <span class="n">refit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">return_train_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+
+<span class="n">grid_search</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Fitting 3 folds for each of 18 candidates, totalling 54 fits
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<style>#sk-container-id-4 {
+  /* Definition of color scheme common for light and dark mode */
+  --sklearn-color-text: #000;
+  --sklearn-color-text-muted: #666;
+  --sklearn-color-line: gray;
+  /* Definition of color scheme for unfitted estimators */
+  --sklearn-color-unfitted-level-0: #fff5e6;
+  --sklearn-color-unfitted-level-1: #f6e4d2;
+  --sklearn-color-unfitted-level-2: #ffe0b3;
+  --sklearn-color-unfitted-level-3: chocolate;
+  /* Definition of color scheme for fitted estimators */
+  --sklearn-color-fitted-level-0: #f0f8ff;
+  --sklearn-color-fitted-level-1: #d4ebff;
+  --sklearn-color-fitted-level-2: #b3dbfd;
+  --sklearn-color-fitted-level-3: cornflowerblue;
+
+  /* Specific color for light theme */
+  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
+  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-icon: #696969;
+
+  @media (prefers-color-scheme: dark) {
+    /* Redefinition of color scheme for dark theme */
+    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
+    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-icon: #878787;
+  }
+}
+
+#sk-container-id-4 {
+  color: var(--sklearn-color-text);
+}
+
+#sk-container-id-4 pre {
+  padding: 0;
+}
+
+#sk-container-id-4 input.sk-hidden--visually {
+  border: 0;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+#sk-container-id-4 div.sk-dashed-wrapped {
+  border: 1px dashed var(--sklearn-color-line);
+  margin: 0 0.4em 0.5em 0.4em;
+  box-sizing: border-box;
+  padding-bottom: 0.4em;
+  background-color: var(--sklearn-color-background);
+}
+
+#sk-container-id-4 div.sk-container {
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
+  position: relative;
+}
+
+#sk-container-id-4 div.sk-text-repr-fallback {
+  display: none;
+}
+
+div.sk-parallel-item,
+div.sk-serial,
+div.sk-item {
+  /* draw centered vertical line to link estimators */
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* Parallel-specific style estimator block */
+
+#sk-container-id-4 div.sk-parallel-item::after {
+  content: "";
+  width: 100%;
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  flex-grow: 1;
+}
+
+#sk-container-id-4 div.sk-parallel {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background-color: var(--sklearn-color-background);
+  position: relative;
+}
+
+#sk-container-id-4 div.sk-parallel-item {
+  display: flex;
+  flex-direction: column;
+}
+
+#sk-container-id-4 div.sk-parallel-item:first-child::after {
+  align-self: flex-end;
+  width: 50%;
+}
+
+#sk-container-id-4 div.sk-parallel-item:last-child::after {
+  align-self: flex-start;
+  width: 50%;
+}
+
+#sk-container-id-4 div.sk-parallel-item:only-child::after {
+  width: 0;
+}
+
+/* Serial-specific style estimator block */
+
+#sk-container-id-4 div.sk-serial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--sklearn-color-background);
+  padding-right: 1em;
+  padding-left: 1em;
+}
+
+
+/* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
+clickable and can be expanded/collapsed.
+- Pipeline and ColumnTransformer use this feature and define the default style
+- Estimators will overwrite some part of the style using the `sk-estimator` class
+*/
+
+/* Pipeline and ColumnTransformer style (default) */
+
+#sk-container-id-4 div.sk-toggleable {
+  /* Default theme specific background. It is overwritten whether we have a
+  specific estimator or a Pipeline/ColumnTransformer */
+  background-color: var(--sklearn-color-background);
+}
+
+/* Toggleable label */
+#sk-container-id-4 label.sk-toggleable__label {
+  cursor: pointer;
+  display: flex;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0.5em;
+  box-sizing: border-box;
+  text-align: center;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+
+#sk-container-id-4 label.sk-toggleable__label .caption {
+  font-size: 0.6rem;
+  font-weight: lighter;
+  color: var(--sklearn-color-text-muted);
+}
+
+#sk-container-id-4 label.sk-toggleable__label-arrow:before {
+  /* Arrow on the left of the label */
+  content: "▸";
+  float: left;
+  margin-right: 0.25em;
+  color: var(--sklearn-color-icon);
+}
+
+#sk-container-id-4 label.sk-toggleable__label-arrow:hover:before {
+  color: var(--sklearn-color-text);
+}
+
+/* Toggleable content - dropdown */
+
+#sk-container-id-4 div.sk-toggleable__content {
+  max-height: 0;
+  max-width: 0;
+  overflow: hidden;
+  text-align: left;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-4 div.sk-toggleable__content.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-4 div.sk-toggleable__content pre {
+  margin: 0.2em;
+  border-radius: 0.25em;
+  color: var(--sklearn-color-text);
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-4 div.sk-toggleable__content.fitted pre {
+  /* unfitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-4 input.sk-toggleable__control:checked~div.sk-toggleable__content {
+  /* Expand drop-down */
+  max-height: 200px;
+  max-width: 100%;
+  overflow: auto;
+}
+
+#sk-container-id-4 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▾";
+}
+
+/* Pipeline/ColumnTransformer-specific style */
+
+#sk-container-id-4 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-4 div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator-specific style */
+
+/* Colorize estimator box */
+#sk-container-id-4 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-4 div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+#sk-container-id-4 div.sk-label label.sk-toggleable__label,
+#sk-container-id-4 div.sk-label label {
+  /* The background is the default theme color */
+  color: var(--sklearn-color-text-on-default-background);
+}
+
+/* On hover, darken the color of the background */
+#sk-container-id-4 div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+/* Label box, darken color on hover, fitted */
+#sk-container-id-4 div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator label */
+
+#sk-container-id-4 div.sk-label label {
+  font-family: monospace;
+  font-weight: bold;
+  display: inline-block;
+  line-height: 1.2em;
+}
+
+#sk-container-id-4 div.sk-label-container {
+  text-align: center;
+}
+
+/* Estimator-specific */
+#sk-container-id-4 div.sk-estimator {
+  font-family: monospace;
+  border: 1px dotted var(--sklearn-color-border-box);
+  border-radius: 0.25em;
+  box-sizing: border-box;
+  margin-bottom: 0.5em;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-4 div.sk-estimator.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+/* on hover */
+#sk-container-id-4 div.sk-estimator:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-4 div.sk-estimator.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Specification for estimator info (e.g. "i" and "?") */
+
+/* Common style for "i" and "?" */
+
+.sk-estimator-doc-link,
+a:link.sk-estimator-doc-link,
+a:visited.sk-estimator-doc-link {
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  text-decoration: none !important;
+  margin-left: 0.5em;
+  text-align: center;
+  /* unfitted */
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-1);
+}
+
+.sk-estimator-doc-link.fitted,
+a:link.sk-estimator-doc-link.fitted,
+a:visited.sk-estimator-doc-link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+div.sk-estimator:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover,
+div.sk-label-container:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover,
+div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+/* Span, style for the box shown on hovering the info icon */
+.sk-estimator-doc-link span {
+  display: none;
+  z-index: 9999;
+  position: relative;
+  font-weight: normal;
+  right: .2ex;
+  padding: .5ex;
+  margin: .5ex;
+  width: min-content;
+  min-width: 20ex;
+  max-width: 50ex;
+  color: var(--sklearn-color-text);
+  box-shadow: 2pt 2pt 4pt #999;
+  /* unfitted */
+  background: var(--sklearn-color-unfitted-level-0);
+  border: .5pt solid var(--sklearn-color-unfitted-level-3);
+}
+
+.sk-estimator-doc-link.fitted span {
+  /* fitted */
+  background: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3);
+}
+
+.sk-estimator-doc-link:hover span {
+  display: block;
+}
+
+/* "?"-specific style due to the `<a>` HTML tag */
+
+#sk-container-id-4 a.estimator_doc_link {
+  float: right;
+  font-size: 1rem;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1rem;
+  height: 1rem;
+  width: 1rem;
+  text-decoration: none;
+  /* unfitted */
+  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+}
+
+#sk-container-id-4 a.estimator_doc_link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+#sk-container-id-4 a.estimator_doc_link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+#sk-container-id-4 a.estimator_doc_link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+}
+</style><div id="sk-container-id-4" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>GridSearchCV(cv=3, estimator=IsolationForest(),
+             param_grid={&#x27;bootstrap&#x27;: [True, False], &#x27;contamination&#x27;: [0.01],
+                         &#x27;max_features&#x27;: [10, 20, 30],
+                         &#x27;n_estimators&#x27;: [50, 100, 200]},
+             return_train_score=True,
+             scoring=make_scorer(f1_score, response_method=&#x27;predict&#x27;, average=macro),
+             verbose=1)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-10" type="checkbox" ><label for="sk-estimator-id-10" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>GridSearchCV</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.6/modules/generated/sklearn.model_selection.GridSearchCV.html">?<span>Documentation for GridSearchCV</span></a><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted"><pre>GridSearchCV(cv=3, estimator=IsolationForest(),
+             param_grid={&#x27;bootstrap&#x27;: [True, False], &#x27;contamination&#x27;: [0.01],
+                         &#x27;max_features&#x27;: [10, 20, 30],
+                         &#x27;n_estimators&#x27;: [50, 100, 200]},
+             return_train_score=True,
+             scoring=make_scorer(f1_score, response_method=&#x27;predict&#x27;, average=macro),
+             verbose=1)</pre></div> </div></div><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-11" type="checkbox" ><label for="sk-estimator-id-11" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>best_estimator_: IsolationForest</div></div></label><div class="sk-toggleable__content fitted"><pre>IsolationForest(bootstrap=True, contamination=0.01, max_features=10,
+                n_estimators=50)</pre></div> </div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-12" type="checkbox" ><label for="sk-estimator-id-12" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>IsolationForest</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.6/modules/generated/sklearn.ensemble.IsolationForest.html">?<span>Documentation for IsolationForest</span></a></div></label><div class="sk-toggleable__content fitted"><pre>IsolationForest(bootstrap=True, contamination=0.01, max_features=10,
+                n_estimators=50)</pre></div> </div></div></div></div></div></div></div></div></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Best model and parameters</span>
+<span class="n">best_iso_forest</span> <span class="o">=</span> <span class="n">grid_search</span><span class="o">.</span><span class="n">best_estimator_</span>
+<span class="n">best_params</span> <span class="o">=</span> <span class="n">grid_search</span><span class="o">.</span><span class="n">best_params_</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best Parameters:&quot;</span><span class="p">,</span> <span class="n">best_params</span><span class="p">)</span>
+
+<span class="c1"># Predict anomalies</span>
+<span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">best_iso_forest</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">best_iso_forest</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="c1"># -1 indicates anomalies, 1 indicates normal points</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_pred_train</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_pred_test</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Best Parameters: {&#39;bootstrap&#39;: True, &#39;contamination&#39;: 0.01, &#39;max_features&#39;: 10, &#39;n_estimators&#39;: 50}
+(array([-1,  1]), array([  335, 33165]))
+(array([-1,  1]), array([  159, 16341]))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">classification_report</span>
+
+<span class="c1"># Make comparable to y_true encoding in DGP above</span>
+<span class="n">y_pred_test</span><span class="p">[</span><span class="n">y_pred_test</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">y_pred_test</span><span class="p">[</span><span class="n">y_pred_test</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">classification_report</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_test</span><span class="p">,</span> <span class="n">target_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Inlier&#39;</span><span class="p">,</span> <span class="s1">&#39;Outlier&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+              precision    recall  f1-score   support
+
+      Inlier       1.00      1.00      1.00     16341
+     Outlier       0.87      0.87      0.87       159
+
+    accuracy                           1.00     16500
+   macro avg       0.93      0.93      0.93     16500
+weighted avg       1.00      1.00      1.00     16500
+
+</pre></div></div>
+</div>
+</section>
+<section id="Model-training-and-prediction">
+<h2>Model training and prediction<a class="headerlink" href="#Model-training-and-prediction" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+
+<span class="c1"># we set nbins = None and thus estimate the optimal number of bins for each feature based on the Posterior mass function</span>
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;discrete&#39;</span> <span class="p">,</span> <span class="n">Discretize</span><span class="p">(</span><span class="n">nbins</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)),</span>      <span class="c1"># step only needed if continous features are present</span>
+    <span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">BHAD</span><span class="p">(</span><span class="n">contamination</span> <span class="o">=</span> <span class="n">outlier_prob_true</span><span class="p">))</span>                         <span class="c1"># set 1% contamination as in DGP (oracle knowledge ;)</span>
+<span class="p">])</span>
+
+<span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">scores_train</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">decision_function</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+-- Bayesian Histogram-based Anomaly Detector (BHAD) --
+
+Setting maximum number of bins 184.
+Input shape: (33500, 30)
+Used 30 numeric feature(s) and 0 categorical feature(s).
+Determining optimal number of bins for numeric features
+Feature var0 using 49 bins
+Determining optimal number of bins for numeric features
+Feature var1 using 61 bins
+Determining optimal number of bins for numeric features
+Feature var2 using 42 bins
+Determining optimal number of bins for numeric features
+Feature var3 using 52 bins
+Determining optimal number of bins for numeric features
+Feature var4 using 46 bins
+Determining optimal number of bins for numeric features
+Feature var5 using 51 bins
+Determining optimal number of bins for numeric features
+Feature var6 using 51 bins
+Determining optimal number of bins for numeric features
+Feature var7 using 51 bins
+Determining optimal number of bins for numeric features
+Feature var8 using 55 bins
+Determining optimal number of bins for numeric features
+Feature var9 using 57 bins
+Determining optimal number of bins for numeric features
+Feature var10 using 45 bins
+Determining optimal number of bins for numeric features
+Feature var11 using 45 bins
+Determining optimal number of bins for numeric features
+Feature var12 using 53 bins
+Determining optimal number of bins for numeric features
+Feature var13 using 42 bins
+Determining optimal number of bins for numeric features
+Feature var14 using 60 bins
+Determining optimal number of bins for numeric features
+Feature var15 using 53 bins
+Determining optimal number of bins for numeric features
+Feature var16 using 54 bins
+Determining optimal number of bins for numeric features
+Feature var17 using 47 bins
+Determining optimal number of bins for numeric features
+Feature var18 using 49 bins
+Determining optimal number of bins for numeric features
+Feature var19 using 51 bins
+Determining optimal number of bins for numeric features
+Feature var20 using 50 bins
+Determining optimal number of bins for numeric features
+Feature var21 using 35 bins
+Determining optimal number of bins for numeric features
+Feature var22 using 55 bins
+Determining optimal number of bins for numeric features
+Feature var23 using 47 bins
+Determining optimal number of bins for numeric features
+Feature var24 using 40 bins
+Determining optimal number of bins for numeric features
+Feature var25 using 55 bins
+Determining optimal number of bins for numeric features
+Feature var26 using 42 bins
+Determining optimal number of bins for numeric features
+Feature var27 using 43 bins
+Determining optimal number of bins for numeric features
+Feature var28 using 44 bins
+Determining optimal number of bins for numeric features
+Feature var29 using 47 bins
+Fit BHAD on discretized data.
+Input shape: (33500, 30)
+One-hot encoding categorical features.
+Matrix dimension after one-hot encoding: (33500, 1172)
+Finished training.
+Score input data.
+Score input data.
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_pred_train</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(array([-1,  1]), array([  335, 33165]))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">scores_test</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">decision_function</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_pred_test</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Score input data.
+Apply fitted one-hot encoder.
+
+Score input data.
+Apply fitted one-hot encoder.
+(array([-1,  1]), array([  149, 16351]))
+</pre></div></div>
+</div>
+<p>Plot score distribution:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">scores_train</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Scores&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_Toy_Example_22_0.png" src="../_images/notebooks_Toy_Example_22_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[56]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">scores_test</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Density&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Scores&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_Toy_Example_23_0.png" src="../_images/notebooks_Toy_Example_23_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[57]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">classification_report</span>
+
+<span class="c1"># Make comparable to y_true encoding</span>
+<span class="n">y_pred_train</span><span class="p">[</span><span class="n">y_pred_train</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">y_pred_train</span><span class="p">[</span><span class="n">y_pred_train</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">classification_report</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_pred_train</span><span class="p">,</span> <span class="n">target_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Inlier&#39;</span><span class="p">,</span> <span class="s1">&#39;Outlier&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+              precision    recall  f1-score   support
+
+      Inlier       1.00      1.00      1.00     33147
+     Outlier       0.97      0.92      0.95       353
+
+    accuracy                           1.00     33500
+   macro avg       0.99      0.96      0.97     33500
+weighted avg       1.00      1.00      1.00     33500
+
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[58]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make comparable to y_true encoding</span>
+<span class="n">y_pred_test</span><span class="p">[</span><span class="n">y_pred_test</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">y_pred_test</span><span class="p">[</span><span class="n">y_pred_test</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">classification_report</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">y_pred_test</span><span class="p">,</span> <span class="n">target_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Inlier&#39;</span><span class="p">,</span> <span class="s1">&#39;Outlier&#39;</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+              precision    recall  f1-score   support
+
+      Inlier       1.00      1.00      1.00     16341
+     Outlier       0.98      0.92      0.95       159
+
+    accuracy                           1.00     16500
+   macro avg       0.99      0.96      0.97     16500
+weighted avg       1.00      1.00      1.00     16500
+
+</pre></div></div>
+</div>
+<section id="Model-explanation:">
+<h3>Model explanation:<a class="headerlink" href="#Model-explanation:" title="Link to this heading"></a></h3>
+<p>Retrieve local model explanations. Here: Specify all numeric and categorical columns explicitly</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[59]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;int&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">cat_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[60]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;discrete&#39;</span><span class="p">,</span> <span class="n">Discretize</span><span class="p">(</span><span class="n">nbins</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">BHAD</span><span class="p">(</span><span class="n">contamination</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">num_features</span> <span class="o">=</span> <span class="n">num_cols</span><span class="p">,</span> <span class="n">cat_features</span> <span class="o">=</span> <span class="n">cat_cols</span><span class="p">))</span>
+<span class="p">])</span>
+
+<span class="n">y_pred_train</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+-- Bayesian Histogram-based Anomaly Detector (BHAD) --
+
+Setting maximum number of bins 184.
+Input shape: (33500, 30)
+Used 30 numeric feature(s) and 0 categorical feature(s).
+Binned continous features into 50 bins.
+Fit BHAD on discretized data.
+Input shape: (33500, 30)
+One-hot encoding categorical features.
+Matrix dimension after one-hot encoding: (33500, 1205)
+Finished training.
+Score input data.
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[61]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bhad</span><span class="w"> </span><span class="kn">import</span> <span class="n">explainer</span>
+
+<span class="n">local_expl</span> <span class="o">=</span> <span class="n">explainer</span><span class="o">.</span><span class="n">Explainer</span><span class="p">(</span><span class="n">bhad_obj</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">],</span> <span class="n">discretize_obj</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">named_steps</span><span class="p">[</span><span class="s1">&#39;discrete&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+--- BHAD Model Explainer ---
+
+Using fitted BHAD and discretizer.
+Marginal distributions estimated using train set of shape (33500, 30)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df_train</span> <span class="o">=</span> <span class="n">local_expl</span><span class="o">.</span><span class="n">get_explanation</span><span class="p">(</span><span class="n">append</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="n">df_train</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[63]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">global_feat_imp</span> <span class="o">=</span> <span class="n">local_expl</span><span class="o">.</span><span class="n">global_feat_imp</span>         <span class="c1"># based on X_train</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">global_feat_imp</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">global_feat_imp</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Feature importances&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_Toy_Example_32_0.png" src="../_images/notebooks_Toy_Example_32_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[65]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y_pred_test</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Score input data.
+Apply fitted one-hot encoder.
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df_test</span> <span class="o">=</span> <span class="n">local_expl</span><span class="o">.</span><span class="n">get_explanation</span><span class="p">(</span><span class="n">thresholds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">.1</span><span class="p">]</span><span class="o">*</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># make threshold more conservative (only more extreme values are considered as outliers)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Create local explanations for 16500 observations.
+Using custom thresholds.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "5f5a8babc19240bea94defd8af6d2f2e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">ex</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">df_test</span><span class="o">.</span><span class="n">explanation</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">obs</span> <span class="o">%</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Obs. </span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Alexander Vosseler.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
