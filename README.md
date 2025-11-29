@@ -22,7 +22,7 @@ BHAD is an explainable anomaly detection method that leverages Bayesian inferenc
 
 ### Using uv
 
-Install BHAD using [uv](https://github.com/astral-sh/uv):
+Install package via [uv](https://github.com/astral-sh/uv):
 
 ```bash
 uv venv --python 3.12
