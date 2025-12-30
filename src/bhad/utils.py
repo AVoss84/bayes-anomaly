@@ -342,30 +342,29 @@ class Discretize(BaseEstimator, TransformerMixin):
         self.df_orig = df_new[self.columns_ + self.cat_columns].copy()
 
         # if you already have it from fit then just output it
-        if hasattr(self, "X_") and (len(self.xindex_fitted_) == X.shape[0]):
+        if hasattr(self, "X_") and self._is_same_data(X, self.X_):
             return self.X_
 
-        # Map new values to discrete training buckets/bins:
-        for row in df_new.itertuples():
-            ind = row.Index
-            row_values = []
-            try:
-                for c in self.columns_:
-                    bin_c = self.save_binnings_[c]
-                    if ~np.isnan(getattr(row, c)):
-                        row_values.append(
-                            list(bin_c[bin_c.contains(getattr(row, c))])[0]
-                        )
-                    else:
-                        row_values.append(np.nan)
+        # Vectorized mapping of new values to discrete training buckets/bins:
+        for col in self.columns_:
+            bin_intervals = self.save_binnings_[col]
+            values = df_new[col].values
 
-                # Ensure the DataFrame column is of type object or string
-                df_new[self.columns_] = df_new[self.columns_].astype("object")
+            # Use pd.cut with the pre-defined bins for vectorized binning
+            binned = pd.cut(
+                values, bins=bin_intervals, duplicates="drop", include_lowest=True
+            )
+            df_new[col] = binned.astype(object)
 
-                df_new.loc[ind, self.columns_] = row_values
-            except Exception as ex:
-                print(ex)
         return df_new
+
+    def _is_same_data(self, X1: pd.DataFrame, X2: pd.DataFrame) -> bool:
+        """Fast check if two DataFrames are the same (by shape and index)."""
+        if X1.shape != X2.shape:
+            return False
+        if not X1.index.equals(X2.index):
+            return False
+        return True
 
 
 def freedman_diaconis(data: np.array, return_width: bool = False) -> int:
@@ -735,9 +734,11 @@ class onehot_encoder(TransformerMixin, BaseEstimator):
                 )
             }
 
-        self.dummyX_ = dummy
+        self.dummyX_ = csr_matrix(
+            dummy.values
+        )  # Store as sparse matrix for consistency
         self.columns_ = list(
-            self.dummyX_.columns
+            dummy.columns
         )  # all final column names in sparse dummy matrix
         self.names2index_ = {
             dummy_names: z for z, dummy_names in enumerate(self.columns_)
@@ -760,34 +761,52 @@ class onehot_encoder(TransformerMixin, BaseEstimator):
         self.selected_col = X.columns[~X.columns.isin(self.exclude_col)]
 
         # If you already have it from fit then just output it
-        if hasattr(self, "X_") and self.X_.equals(X):
+        if hasattr(self, "X_") and self._is_same_data(X, self.X_):
             return self.dummyX_
 
         df = X[self.selected_col].copy()
         df.columns = [str(c) for c in df.columns]  # force columns to strings
-        ohm = np.zeros((df.shape[0], len(self.columns_)))
+        n_rows = df.shape[0]
+        n_cols = len(self.columns_)
+
+        # Pre-allocate arrays for sparse matrix construction
+        row_indices = []
+        col_indices = []
 
         for col in df.columns:
-            raw_level_list = np.array(
-                list(self.value2name_[col].keys())
-            )  # take advantage of vectorized operations
-            mask = np.isin(df[col].values, raw_level_list)  # use vectorized operations
-
+            raw_level_list = np.array(list(self.value2name_[col].keys()))
             binned_values = df[col].values
             oos_dummy_name = col + self.prefix_sep_ + self.oos_token_
-            # set 'Others' category in case no overlap of input interval with train set intervals ('bins')
-            dummy_names = np.array(
-                [
-                    self.value2name_[col][binned_values[z]] if m else oos_dummy_name
-                    for z, m in zip(np.arange(len(mask)), mask)
-                ]
-            )
+            oos_index = self.names2index_[oos_dummy_name]
 
-            my_index = np.array(
-                [self.names2index_[dummy_name] for dummy_name in dummy_names]
-            )
-            ohm[np.arange(df.shape[0]), my_index] = 1
-        return csr_matrix(ohm)
+            # Vectorized lookup using numpy
+            mask = np.isin(binned_values, raw_level_list)
+
+            # Build lookup dict for this column
+            value_to_index = {
+                v: self.names2index_[self.value2name_[col][v]]
+                for v in self.value2name_[col]
+            }
+
+            # Vectorized index assignment
+            col_idx = np.full(n_rows, oos_index, dtype=np.int32)
+            for val, idx in value_to_index.items():
+                col_idx[binned_values == val] = idx
+
+            row_indices.extend(range(n_rows))
+            col_indices.extend(col_idx)
+
+        # Build sparse matrix directly
+        data = np.ones(len(row_indices), dtype=np.float64)
+        return csr_matrix((data, (row_indices, col_indices)), shape=(n_rows, n_cols))
+
+    def _is_same_data(self, X1: pd.DataFrame, X2: pd.DataFrame) -> bool:
+        """Fast check if two DataFrames are the same (by shape and index)."""
+        if X1.shape != X2.shape:
+            return False
+        if not X1.index.equals(X2.index):
+            return False
+        return True
 
     def get_feature_names_out(self, input_features: list = None) -> np.array:
         """

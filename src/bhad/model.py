@@ -1,8 +1,10 @@
-from typing import List, Optional, Union
 import warnings
-import pandas as pd
+from typing import List, Optional, Union
+
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, OutlierMixin
+
 import bhad.utils as utils
 
 
@@ -12,9 +14,9 @@ class BHAD(BaseEstimator, OutlierMixin):
         self,
         contamination: float = 0.01,
         alpha: float = 1 / 2,
-        exclude_col: Optional[List[str]] = [],
-        num_features: Optional[List[str]] = [],
-        cat_features: Optional[List[str]] = [],
+        exclude_col: List[str] = [],
+        num_features: List[str] = [],
+        cat_features: List[str] = [],
         append_score: bool = False,
         verbose: bool = True,
     ):
@@ -48,11 +50,19 @@ class BHAD(BaseEstimator, OutlierMixin):
         if self.verbose:
             print("\n-- Bayesian Histogram-based Anomaly Detector (BHAD) --\n")
 
-    def __del__(self):
-        class_name = self.__class__.__name__
+    def __del__(self) -> None:
+        pass
 
     def __repr__(self) -> str:
         return f"BHAD(contamination = {self.contamination}, alpha = {self.alpha}, exclude_col = {self.exclude_col}, numeric_features = {self.numeric_features}, cat_features = {self.cat_features}, append_score = {self.append_score}, verbose = {self.verbose})"
+
+    def _is_same_data(self, X1: pd.DataFrame, X2: pd.DataFrame) -> bool:
+        """Fast check if two DataFrames are the same (by shape and index)."""
+        if X1.shape != X2.shape:
+            return False
+        if not X1.index.equals(X2.index):
+            return False
+        return True
 
     def _fast_bhad(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -122,9 +132,7 @@ class BHAD(BaseEstimator, OutlierMixin):
         # Calculate outlier score for each row (observation),
         # see equation (5) in [1]
         # -----------------------------------------------------
-        out = pd.Series(
-            np.apply_along_axis(np.sum, 1, self.f_mat_bayes), index=df.index
-        )
+        out = pd.Series(self.f_mat_bayes.sum(axis=1), index=df.index)
         if self.append_score:
             out = pd.concat([df, pd.DataFrame(out, columns=["outlier_score"])], axis=1)
         return out
@@ -225,12 +233,10 @@ class BHAD(BaseEstimator, OutlierMixin):
             self.freq_updated_ * self.df_one
         )  # get level specific counts for X, e.g. test set
         f_mat_bayes = self.log_pred * self.df_one
-        self.scores = pd.Series(
-            np.apply_along_axis(np.sum, 1, f_mat_bayes), index=X.index
-        )
+        self.scores = pd.Series(f_mat_bayes.sum(axis=1), index=X.index)
 
         # If you already have it from fit then just output it:
-        if hasattr(self, "X_") and X.equals(self.X_):
+        if hasattr(self, "X_") and self._is_same_data(X, self.X_):
             self.f_mat = self.f_mat_.copy()  # current f_mat (here based on X_train)
             return self.scores_
         else:
@@ -254,7 +260,7 @@ class BHAD(BaseEstimator, OutlierMixin):
             value.
         """
         # Center scores; divide into outlier and inlier (-/+)
-        if hasattr(self, "X_") and X.equals(self.X_):
+        if hasattr(self, "X_") and self._is_same_data(X, self.X_):
             if self.verbose:
                 print("Score input data.")
             self.anomaly_scores = self.scores_.to_numpy() - self.threshold_
@@ -282,7 +288,7 @@ class BHAD(BaseEstimator, OutlierMixin):
         """
         anomaly_scores = self.decision_function(X)  # get centered anomaly scores
         outliers = np.asarray(
-            -1 * (anomaly_scores <= 0).astype(int)
+            -1 * np.asarray(anomaly_scores <= 0).astype(int)
         )  # for sklearn compatibility
-        inliers = np.asarray((anomaly_scores > 0).astype(int))
+        inliers = np.asarray(np.asarray(anomaly_scores > 0).astype(int))
         return outliers + inliers
