@@ -37,7 +37,8 @@ dependencies = [
   "tqdm>=4.0",
 ]
 
-[project.optional-dependencies]
+
+[dependency-groups]
 dev = [
   "jupyter",
   "ipykernel",
