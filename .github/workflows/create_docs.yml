@@ -21,7 +21,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv --no-cache
-          uv venv --python 3.12 && uv pip install ".[dev]" --no-cache
+          uv venv --python 3.12
+          uv pip install ".[dev]" --no-cache --python .venv/bin/python
       - name: Setup Pandoc
         uses: r-lib/actions/setup-pandoc@v2
         
