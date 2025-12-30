@@ -22,10 +22,10 @@ jobs:
       - name: Install build & twine
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build twine
+          python -m pip install build twine pytest
 
-      # (A) Install your package in editable mode with the "notebook" extras (which includes pytest)
-      - name: Install package + 'notebook' extras
+      # (A) Install your package in editable mode with dev extras
+      - name: Install package + dev extras
         run: |
           python -m pip install -e ".[dev]"
 
