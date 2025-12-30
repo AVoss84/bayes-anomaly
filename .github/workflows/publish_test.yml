@@ -1,0 +1,48 @@
+name: Publish to Test PyPI
+
+on:
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - "test-0.*"
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install build & twine
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      # (A) Install your package in editable mode with the "notebook" extras (which includes pytest)
+      - name: Install package + 'notebook' extras
+        run: |
+          python -m pip install -e ".[dev]"
+
+      # (B) Run your tests
+      - name: Run tests
+        run: |
+          pytest --verbose
+
+      # (C) Build the package
+      - name: Build the package
+        run: python -m build
+
+      # (D) Upload to Test PyPI (only if tests passed)
+      - name: Upload to Test PyPI
+        if: success()
+        run: |
+          twine upload --repository testpypi dist/*
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}

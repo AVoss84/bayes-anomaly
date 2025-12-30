@@ -1,0 +1,42 @@
+name: Create package documentation
+
+on:
+  push:
+    branches:
+      #- main
+      - docs
+  workflow_dispatch:
+permissions:
+  contents: write
+
+jobs:
+  create-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install uv --no-cache
+          uv venv --python 3.12 && uv pip install ".[dev]" --no-cache
+      - name: Setup Pandoc
+        uses: r-lib/actions/setup-pandoc@v2        
+      - name: Copy notebooks for docs
+        run: |
+          mkdir -p docs/source/notebooks
+          cp src/notebooks/*.ipynb docs/source/notebooks/
+      - name: Sphinx build
+        run: |
+          source .venv/bin/activate
+          rm -rf docs/build/html             # Clean up old HTML build completely
+          sphinx-build docs/source docs/build/html
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        # if: ${{ github.event_name == 'push' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/html/
+          force_orphan: true
