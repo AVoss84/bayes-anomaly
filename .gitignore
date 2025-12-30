@@ -164,4 +164,3 @@ uv.lock
 
 # ignore sphinx build directory
 docs/build/
-docs/

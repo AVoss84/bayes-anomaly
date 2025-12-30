@@ -35,9 +35,6 @@ dependencies = [
   "scipy>=1.9,<1.13",
   "statsmodels>=0.14",
   "tqdm>=4.0",
-  "numpy>=1.26.4",
-  "ipykernel>=7.1.0",
-  "certifi>=2025.11.12",
 ]
 
 
