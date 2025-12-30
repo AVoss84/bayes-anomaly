@@ -1,0 +1,106 @@
+# Documentation Build & Deployment Guide
+# ======================================
+# Step-by-step guide to create and deploy Sphinx docs to GitHub Pages
+
+# Prerequisites:
+# - Python 3.12+
+# - uv package manager installed
+# - Dev dependencies installed: uv sync --group dev
+
+# =============================================================================
+# OPTION 1: Automatic Deployment via GitHub Actions (Recommended)
+# =============================================================================
+
+steps_automatic:
+  1_push_to_branch:
+    description: "Push your changes to the 'docs' or 'main' branch"
+    commands:
+      - git add .
+      - git commit -m "Update documentation"
+      - git push
+
+  2_wait_for_action:
+    description: "The GitHub Action 'create_docs.yml' will automatically:"
+    actions:
+      - Install dependencies
+      - Copy notebooks to docs/source/notebooks/
+      - Build Sphinx documentation
+      - Deploy to gh-pages branch
+
+  3_check_status:
+    description: "Monitor the workflow progress"
+    url: "https://github.com/AVoss84/bayes-anomaly/actions"
+
+  4_view_docs:
+    description: "Once complete, view your documentation at:"
+    url: "https://avoss84.github.io/bayes-anomaly/"
+
+# =============================================================================
+# OPTION 2: Manual Local Build & Deployment
+# =============================================================================
+
+steps_manual:
+  1_install_dependencies:
+    description: "Install dev dependencies with uv"
+    command: "uv sync --group dev"
+
+  2_copy_notebooks:
+    description: "Copy example notebooks to docs folder"
+    command: |
+      mkdir -p docs/source/notebooks
+      cp src/notebooks/*.ipynb docs/source/notebooks/
+
+  3_build_docs:
+    description: "Build the Sphinx HTML documentation"
+    command: "cd docs && uv run make html"
+    # Alternative: uv run sphinx-build docs/source docs/build/html
+
+  4_preview_locally:
+    description: "Preview the docs locally (optional)"
+    command: "open docs/build/html/index.html"
+    # Or start a local server:
+    # cd docs/build/html && python -m http.server 8000
+
+  5_deploy_to_gh_pages:
+    description: "Deploy to GitHub Pages manually"
+    commands:
+      - git checkout gh-pages
+      - rm -rf _images _sources _static notebooks *.html *.inv *.js .buildinfo .doctrees
+      - cp -r docs/build/html/* .
+      - touch .nojekyll
+      - git add -A
+      - git commit -m "Update documentation"
+      - git push
+      - git checkout docs  # Switch back to your working branch
+
+# =============================================================================
+# Useful Commands
+# =============================================================================
+
+useful_commands:
+  clean_build:
+    description: "Clean and rebuild documentation"
+    command: "cd docs && uv run make clean && uv run make html"
+
+  trigger_workflow_manually:
+    description: "Trigger the GitHub Action manually from the Actions tab"
+    url: "https://github.com/AVoss84/bayes-anomaly/actions/workflows/create_docs.yml"
+    note: "Click 'Run workflow' button"
+
+# =============================================================================
+# Project Structure
+# =============================================================================
+
+documentation_structure:
+  docs/source/:
+    - conf.py          # Sphinx configuration
+    - index.rst        # Main documentation index
+    - "*.rst"          # ReStructuredText source files
+    - "*.md"           # Markdown source files (via myst-parser)
+    - notebooks/       # Jupyter notebooks for examples
+
+  docs/build/html/:
+    description: "Generated HTML output (not committed to docs branch)"
+
+  gh-pages_branch:
+    description: "Contains only the built HTML files for GitHub Pages"
