@@ -32,7 +32,7 @@ jobs:
       # (B) Run your tests
       - name: Run tests
         run: |
-          pytest --verbose
+          python -m pytest --verbose
 
       # (C) Build the package
       - name: Build the package
