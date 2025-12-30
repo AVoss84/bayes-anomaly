@@ -3,8 +3,8 @@ name: Create package documentation
 on:
   push:
     branches:
-      #- main
-      - docs
+      - main
+      #- docs
   workflow_dispatch:
 
 permissions:

@@ -9,7 +9,6 @@ Install *bhad* package using `uv <https://github.com/astral-sh/uv>`__:
 .. code-block:: bash
 
    uv venv --python 3.12         
-   source .venv/bin/activate
    uv add bhad
 
 Alternatively, using pip:

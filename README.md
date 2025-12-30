@@ -26,7 +26,6 @@ Install BHAD using [uv](https://github.com/astral-sh/uv):
 
 ```bash
 uv venv --python 3.12
-source .venv/bin/activate
 uv add bhad
 ```
 
