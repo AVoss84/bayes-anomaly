@@ -48,5 +48,14 @@ If an observation is not an element of that interval consider it as relevant (w.
 ### Update to Python 3.12
 - Change installation process from setup.py to suing pyproject.toml
 - Update Python version and related package dependencies
+
+## [0.2.7]
+### Performance optimizations
+- Replace slow `np.apply_along_axis()` with vectorized `sum(axis=1)` in BHAD model scoring
+- Replace expensive `DataFrame.equals()` checks with fast shape/index comparison in `_is_same_data()` helper
+- Vectorize `Discretize.transform()` method: replaced slow row-by-row `itertuples()` loop with vectorized `pd.cut()` for dramatic speedup on large datasets
+- Optimize `onehot_encoder.transform()`: use sparse matrix construction directly instead of dense array allocation
+- Store fitted one-hot matrix as `csr_matrix` for consistency between fit and transform
+- Add `_is_same_data()` helper methods to `BHAD`, `Discretize`, and `onehot_encoder` classes for efficient data caching checks
 - Update README to use uv for setup
 - Add more documentation
