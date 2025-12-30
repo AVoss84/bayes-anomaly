@@ -25,13 +25,20 @@ steps_automatic:
       - Install dependencies
       - Copy notebooks to docs/source/notebooks/
       - Build Sphinx documentation
-      - Deploy to gh-pages branch
+      - Push built HTML to gh-pages branch (via peaceiris/actions-gh-pages)
 
-  3_check_status:
+  3_pages_deployment:
+    description: "After create_docs.yml succeeds, GitHub automatically triggers a 'pages-build-deployment' workflow"
+    details:
+      - "This is a built-in GitHub bot workflow"
+      - "It deploys the content from gh-pages branch to GitHub Pages"
+      - "You can monitor this at: https://github.com/AVoss84/bayes-anomaly/actions (look for 'pages-build-deployment')"
+
+  4_check_status:
     description: "Monitor the workflow progress"
     url: "https://github.com/AVoss84/bayes-anomaly/actions"
 
-  4_view_docs:
+  5_view_docs:
     description: "Once complete, view your documentation at:"
     url: "https://avoss84.github.io/bayes-anomaly/"
 
