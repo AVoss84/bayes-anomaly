@@ -21,8 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv --no-cache
-          uv venv --python 3.12
-          uv pip install ".[dev]" --no-cache --python .venv/bin/python
+          uv sync --group dev
       - name: Setup Pandoc
         uses: r-lib/actions/setup-pandoc@v2
         
@@ -36,9 +35,8 @@ jobs:
           cp src/notebooks/*.ipynb docs/source/notebooks/
       - name: Sphinx build
         run: |
-          source .venv/bin/activate
           rm -rf docs/build/html             # Clean up old HTML build completely
-          sphinx-build docs/source docs/build/html
+          uv run sphinx-build docs/source docs/build/html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         # if: ${{ github.event_name == 'push' }}
