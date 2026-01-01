@@ -42,7 +42,7 @@ class Explainer:
             len(self.avf.numeric_features_ + self.avf.cat_features_) > 0
         ), f"\nAt least one numeric or categorical column has to be specified in {self.avf} explicitly!"
 
-    def __del__(self):
+    def __del__(self) -> None:
         class_name = self.__class__.__name__
 
     def __repr__(self):

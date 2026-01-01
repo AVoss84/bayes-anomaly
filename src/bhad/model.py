@@ -1,13 +1,12 @@
+import warnings
 from typing import List, Optional, Union
 
-# from copy import deepcopy
-import warnings
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, OutlierMixin
 
-# from sklearn.preprocessing import OneHotEncoder
 import bhad.utils as utils
+from bhad.utils import Discretize
 
 
 class BHAD(BaseEstimator, OutlierMixin):
@@ -16,11 +15,21 @@ class BHAD(BaseEstimator, OutlierMixin):
         self,
         contamination: float = 0.01,
         alpha: float = 1 / 2,
-        exclude_col: Optional[List[str]] = [],
-        num_features: Optional[List[str]] = [],
-        cat_features: Optional[List[str]] = [],
+        exclude_col: List[str] = [],
+        num_features: List[str] = [],
+        cat_features: List[str] = [],
         append_score: bool = False,
         verbose: bool = True,
+        # Discretize parameters (optional - set to enable automatic discretization)
+        nbins: Optional[int] = None,
+        discretize: bool = True,
+        lower: Optional[float] = None,
+        k: int = 1,
+        round_intervals: int = 5,
+        eps: float = 0.001,
+        make_labels: bool = False,
+        prior_gamma: float = 0.9,
+        prior_max_M: Optional[int] = None,
     ):
         """
         Bayesian Histogram-based Anomaly Detector (BHAD), see [1] for details.
@@ -35,6 +44,15 @@ class BHAD(BaseEstimator, OutlierMixin):
             cat_features (Optional[List[str]], optional): List of categorical feature names. Defaults to [].
             append_score (bool, optional): Output input dataset with model scores appended in extra column. Defaults to False.
             verbose (bool, optional): Show user information. Defaults to True.
+            nbins (int, optional): Number of bins for discretization. If None, optimal bins are estimated via MAP. Defaults to None.
+            discretize (bool, optional): Whether to automatically discretize continuous features. Defaults to True.
+            lower (float, optional): Lower bound for binning (e.g., 0 for amounts). Defaults to None.
+            k (int, optional): Number of standard deviations for bin intervals. Defaults to 1.
+            round_intervals (int, optional): Number of digits to round intervals. Defaults to 5.
+            eps (float, optional): Minimum variance threshold for zero-variance check. Defaults to 0.001.
+            make_labels (bool, optional): Use integer labels instead of interval labels. Defaults to False.
+            prior_gamma (float, optional): Prior hyperparameter for geometric distribution. Defaults to 0.9.
+            prior_max_M (int, optional): Maximum number of bins to consider. Defaults to None (auto).
 
         References:
         -----------
@@ -49,14 +67,35 @@ class BHAD(BaseEstimator, OutlierMixin):
         self.numeric_features = num_features
         self.cat_features = cat_features
         self.exclude_col = exclude_col  # list with column names in X of columns to exclude for computation of the score
+
+        # Discretize parameters
+        self.nbins = nbins
+        self.discretize = discretize
+        self.lower = lower
+        self.k = k
+        self.round_intervals = round_intervals
+        self.eps = eps
+        self.make_labels = make_labels
+        self.prior_gamma = prior_gamma
+        self.prior_max_M = prior_max_M
+        self._discretizer = None  # will hold the fitted Discretize instance
+
         if self.verbose:
             print("\n-- Bayesian Histogram-based Anomaly Detector (BHAD) --\n")
 
-    def __del__(self):
-        class_name = self.__class__.__name__
+    def __del__(self) -> None:
+        pass
 
-    def __repr__(self):
-        return f"BHAD(contamination = {self.contamination}, alpha = {self.alpha}, exclude_col = {self.exclude_col}, numeric_features = {self.numeric_features}, cat_features = {self.cat_features}, append_score = {self.append_score}, verbose = {self.verbose})"
+    def __repr__(self) -> str:
+        return f"BHAD(contamination = {self.contamination}, alpha = {self.alpha}, exclude_col = {self.exclude_col}, numeric_features = {self.numeric_features}, cat_features = {self.cat_features}, append_score = {self.append_score}, verbose = {self.verbose}, nbins = {self.nbins}, discretize = {self.discretize})"
+
+    def _is_same_data(self, X1: pd.DataFrame, X2: pd.DataFrame) -> bool:
+        """Fast check if two DataFrames are the same (by shape and index)."""
+        if X1.shape != X2.shape:
+            return False
+        if not X1.index.equals(X2.index):
+            return False
+        return True
 
     def _fast_bhad(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -126,12 +165,61 @@ class BHAD(BaseEstimator, OutlierMixin):
         # Calculate outlier score for each row (observation),
         # see equation (5) in [1]
         # -----------------------------------------------------
-        out = pd.Series(
-            np.apply_along_axis(np.sum, 1, self.f_mat_bayes), index=df.index
-        )
+        out = pd.Series(self.f_mat_bayes.sum(axis=1), index=df.index)
         if self.append_score:
             out = pd.concat([df, pd.DataFrame(out, columns=["outlier_score"])], axis=1)
         return out
+
+    def _discretize_data(self, X: pd.DataFrame, fit: bool = True) -> pd.DataFrame:
+        """
+        Apply discretization to the input data if enabled.
+
+        Parameters
+        ----------
+        X : pandas.DataFrame
+            The input samples.
+        fit : bool
+            If True, fit the discretizer on X. If False, use already fitted discretizer.
+
+        Returns
+        -------
+        X_discretized : pandas.DataFrame
+            The discretized data.
+        """
+        if not self.discretize:
+            return X
+
+        # Check if there are any numeric columns to discretize
+        numeric_cols = X.select_dtypes(
+            include=[np.number, "float", "int"]
+        ).columns.tolist()
+        if not numeric_cols:
+            if self.verbose:
+                print("No numeric features found - skipping discretization.")
+            return X
+
+        if fit:
+            if self.verbose:
+                print("Discretizing continuous features...")
+            self._discretizer = Discretize(
+                columns=numeric_cols,
+                nbins=self.nbins,
+                lower=self.lower,
+                k=self.k,
+                round_intervals=self.round_intervals,
+                eps=self.eps,
+                make_labels=self.make_labels,
+                verbose=self.verbose,
+                prior_gamma=self.prior_gamma,
+                prior_max_M=self.prior_max_M,
+            )
+            X_discretized = self._discretizer.fit_transform(X)
+        else:
+            if self._discretizer is None:
+                raise ValueError("Discretizer not fitted. Call fit() first.")
+            X_discretized = self._discretizer.transform(X)
+
+        return X_discretized
 
     def fit(self, X: pd.DataFrame, y: Union[np.array, pd.Series] = None) -> "BHAD":
         """
@@ -141,7 +229,8 @@ class BHAD(BaseEstimator, OutlierMixin):
         ----------
         X : pandas.DataFrame, shape (n_samples, n_features)
             The input samples. X values should be of type str, or castable to
-            str (e.g. catagorical).
+            str (e.g. catagorical). If discretize=True (default), continuous
+            features will be automatically discretized.
         y : Ignored
             Not used, present for API consistency by convention.
 
@@ -149,12 +238,18 @@ class BHAD(BaseEstimator, OutlierMixin):
         -------
         self : BHAD object
         """
+        # Store original input for reference
+        self.X_orig_ = X.copy()
+
+        # Apply discretization if enabled
+        X_disc = self._discretize_data(X, fit=True)
+
         # Fit model:
         # ------------
         if self.verbose:
             print("Fit BHAD on discretized data.")
-            print(f"Input shape: {X.shape}")
-        self.scores = self._fast_bhad(X)
+            print(f"Input shape: {X_disc.shape}")
+        self.scores = self._fast_bhad(X_disc)
 
         if self.append_score:
             self.threshold_ = np.nanpercentile(
@@ -169,7 +264,7 @@ class BHAD(BaseEstimator, OutlierMixin):
 
         # Tag as fitted for sklearn compatibility:
         # https://scikit-learn.org/stable/developers/develop.html#estimated-attributes
-        self.X_ = X
+        self.X_ = X_disc
         self.xindex_fitted_, self.df_, self.scores_, self.freq_ = (
             self.X_.index,
             self.df,
@@ -197,7 +292,8 @@ class BHAD(BaseEstimator, OutlierMixin):
         ----------
         X : pandas.DataFrame, shape (n_samples, n_features)
             The input samples. X values should be of type str, or easily castable
-            to str (e.g. categorical).
+            to str (e.g. categorical). If discretize=True, continuous features
+            will be automatically discretized using the fitted discretizer.
 
         Returns
         -------
@@ -205,10 +301,23 @@ class BHAD(BaseEstimator, OutlierMixin):
             The outlier score of the input samples centered arount threshold
             value.
         """
+        # Check if this is the same data as training (before discretization)
+        is_training_data = hasattr(self, "X_orig_") and self._is_same_data(
+            X, self.X_orig_
+        )
+
+        if is_training_data:
+            # Return cached scores for training data
+            self.f_mat = self.f_mat_.copy()
+            return self.scores_
+
+        # Apply discretization if enabled
+        X_disc = self._discretize_data(X, fit=False)
+
         if self.verbose:
             print("\nScore input data.")
             print("Apply fitted one-hot encoder.")
-        df = X.copy()
+        df = X_disc.copy()
         self.df_one = self.enc_.transform(
             df
         ).toarray()  # apply fitted one-hot encoder to categorical -> sparse dummy matrix
@@ -229,16 +338,9 @@ class BHAD(BaseEstimator, OutlierMixin):
             self.freq_updated_ * self.df_one
         )  # get level specific counts for X, e.g. test set
         f_mat_bayes = self.log_pred * self.df_one
-        self.scores = pd.Series(
-            np.apply_along_axis(np.sum, 1, f_mat_bayes), index=X.index
-        )
+        self.scores = pd.Series(f_mat_bayes.sum(axis=1), index=X.index)
 
-        # If you already have it from fit then just output it:
-        if hasattr(self, "X_") and X.equals(self.X_):
-            self.f_mat = self.f_mat_.copy()  # current f_mat (here based on X_train)
-            return self.scores_
-        else:
-            return self.scores
+        return self.scores
 
     def decision_function(self, X: pd.DataFrame) -> np.array:
         """
@@ -249,7 +351,8 @@ class BHAD(BaseEstimator, OutlierMixin):
         ----------
         X : pandas.DataFrame, shape (n_samples, n_features)
             The input samples. X values should be of type str, or easily castable
-            to str (e.g. categorical).
+            to str (e.g. categorical). If discretize=True, continuous features
+            will be automatically discretized using the fitted discretizer.
 
         Returns
         -------
@@ -257,8 +360,13 @@ class BHAD(BaseEstimator, OutlierMixin):
             The outlier score of the input samples centered arount threshold
             value.
         """
+        # Check if this is the same data as training (before discretization)
+        is_training_data = hasattr(self, "X_orig_") and self._is_same_data(
+            X, self.X_orig_
+        )
+
         # Center scores; divide into outlier and inlier (-/+)
-        if hasattr(self, "X_") and X.equals(self.X_):
+        if is_training_data:
             if self.verbose:
                 print("Score input data.")
             self.anomaly_scores = self.scores_.to_numpy() - self.threshold_
@@ -276,7 +384,8 @@ class BHAD(BaseEstimator, OutlierMixin):
         ----------
         X : pandas.DataFrame, shape (n_samples, n_features)
             The input samples. X values should be of type str, or easily castable
-            to str (e.g. categorical).
+            to str (e.g. categorical). If discretize=True, continuous features
+            will be automatically discretized using the fitted discretizer.
 
         Returns
         -------
@@ -286,7 +395,7 @@ class BHAD(BaseEstimator, OutlierMixin):
         """
         anomaly_scores = self.decision_function(X)  # get centered anomaly scores
         outliers = np.asarray(
-            -1 * (anomaly_scores <= 0).astype(int)
+            -1 * np.asarray(anomaly_scores <= 0).astype(int)
         )  # for sklearn compatibility
-        inliers = np.asarray((anomaly_scores > 0).astype(int))
+        inliers = np.asarray(np.asarray(anomaly_scores > 0).astype(int))
         return outliers + inliers
