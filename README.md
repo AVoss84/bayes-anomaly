@@ -42,23 +42,18 @@ pip install bhad
 ```python
 import numpy as np
 import pandas as pd
-from sklearn.pipeline import Pipeline
 from bhad.model import BHAD
-from bhad.utils import Discretize
 
 # Load your data
 X = pd.DataFrame(np.random.randn(1000, 10), 
                  columns=[f'feature_{i}' for i in range(10)])
 
-# Create pipeline with discretization and BHAD model
-pipe = Pipeline(steps=[
-    ('discrete', Discretize(nbins=None, verbose=False)),  # Discretize continuous features
-    ('model', BHAD(contamination=0.01))                   # BHAD model
-])
+# Create BHAD model with integrated discretization
+model = BHAD(contamination=0.01, nbins=None, verbose=False)
 
-# Fit the pipeline and predict anomalies
-anomaly_labels = pipe.fit_predict(X)        # Returns -1 for outliers, 1 for inliers
-anomaly_scores = pipe.decision_function(X)
+# Fit the model and predict anomalies
+anomaly_labels = model.fit_predict(X)        # Returns -1 for outliers, 1 for inliers
+anomaly_scores = model.decision_function(X)
 ```
 
 ## Documentation

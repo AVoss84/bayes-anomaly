@@ -59,3 +59,30 @@ If an observation is not an element of that interval consider it as relevant (w.
 - Add `_is_same_data()` helper methods to `BHAD`, `Discretize`, and `onehot_encoder` classes for efficient data caching checks
 - Update README to use uv for setup
 - Add more documentation
+
+## [0.2.9]
+### Integrated Discretization into BHAD
+- **New simplified API**: BHAD now includes built-in discretization, eliminating the need for sklearn Pipeline wrapper
+- Added new parameters to BHAD constructor: `nbins`, `discretize`, `lower`, `k`, `round_intervals`, `eps`, `make_labels`, `prior_gamma`, `prior_max_M`
+- When `discretize=True` (default), continuous features are automatically discretized during `fit()` and `transform()` calls
+- Internal `_discretizer` attribute holds the fitted `Discretize` instance for use with the Explainer
+- Updated `score_samples()`, `decision_function()`, and `predict()` to handle automatic discretization of new data
+- **Backward compatible**: Set `discretize=False` to use the old Pipeline-based workflow
+- Added new example notebook `Titanic_Example_NewAPI.ipynb` demonstrating the simplified API
+
+#### Migration Guide
+**Old API (still supported with `discretize=False`):**
+```python
+from sklearn.pipeline import Pipeline
+pipe = Pipeline(steps=[
+    ('discrete', Discretize(nbins=None)),
+    ('model', BHAD(contamination=0.01, discretize=False))
+])
+y_pred = pipe.fit_predict(X_train)
+```
+
+**New API (recommended):**
+```python
+model = BHAD(contamination=0.01, nbins=None)
+y_pred = model.fit_predict(X_train)
+```
