@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run tests with coverage
+        run: |
+          uv run pytest --cov=bhad --cov-report=xml --cov-report=json:coverage.json -q
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          COVERAGE=$(python -c "import json; print(int(json.load(open('coverage.json'))['totals']['percent_covered_display']))")
+          if [ "$COVERAGE" -ge 90 ]; then COLOR="brightgreen"
+          elif [ "$COVERAGE" -ge 75 ]; then COLOR="green"
+          elif [ "$COVERAGE" -ge 60 ]; then COLOR="yellowgreen"
+          elif [ "$COVERAGE" -ge 40 ]; then COLOR="yellow"
+          else COLOR="red"; fi
+          curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > coverage-badge.svg
+
+      - name: Push badge to badges branch
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          cp coverage-badge.svg /tmp/coverage-badge.svg
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan badges-tmp
+          git rm -rf .
+          cp /tmp/coverage-badge.svg coverage-badge.svg
+          git add coverage-badge.svg
+          git commit -m "Update coverage badge"
+          git push origin HEAD:badges --force
