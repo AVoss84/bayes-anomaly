@@ -213,7 +213,7 @@ class Discretize(BaseEstimator, TransformerMixin):
         ].copy()  # train data with non-discretized values for numeric features for model explainer
 
         for col in self.columns:
-            v = df_new[col].values  # values of feature col
+            v = df_new[col].values.copy()  # writable copy of feature values
             # ---------------------------------------------------
             # Determine optimal number of bins per feature
             # using its Bayesian Maximum A-Posteriori estimate:
