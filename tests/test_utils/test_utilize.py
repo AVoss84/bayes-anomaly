@@ -187,10 +187,10 @@ def test_discretize_map_estimate() -> None:
 
 def test_discretize_zero_variance() -> None:
     """Discretize should handle zero-variance features with jitter."""
-    data = pd.DataFrame({"x": np.ones(100)})
+    data = pd.DataFrame({"x": np.ones(100, dtype=np.float64)})
     disc = Discretize(columns=["x"], nbins=5, verbose=False)
-    disc.fit(data)
-    result = disc.transform(data)
+    disc.fit(data.copy())
+    result = disc.transform(data.copy())
     assert result.shape == data.shape
 
 
