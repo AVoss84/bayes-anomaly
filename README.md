@@ -1,7 +1,7 @@
 # Bayesian Histogram Anomaly Detection (BHAD)
 
 [![PyPI version](https://img.shields.io/pypi/v/bhad.svg)](https://pypi.org/project/bhad/)
-[![PyPI downloads](https://img.shields.io/pepy/dt/bhad)](https://pepy.tech/projects/bhad)
+[![Downloads](https://static.pepy.tech/badge/bhad)](https://pepy.tech/projects/bhad)
 [![Tests](https://github.com/AVoss84/bayes-anomaly/actions/workflows/tests.yml/badge.svg)](https://github.com/AVoss84/bayes-anomaly/actions/workflows/tests.yml)
 [![codecov](https://raw.githubusercontent.com/AVoss84/bayes-anomaly/badges/coverage-badge.svg)](https://github.com/AVoss84/bayes-anomaly/actions/workflows/tests.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
