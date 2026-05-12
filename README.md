@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/bhad_logo.svg" alt="BHAD Logo" width="300">
+</p>
+
 # Bayesian Histogram Anomaly Detection (BHAD)
 
 [![PyPI version](https://img.shields.io/pypi/v/bhad.svg)](https://pypi.org/project/bhad/)
