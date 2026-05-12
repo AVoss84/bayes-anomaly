@@ -1,47 +1,76 @@
-<svg width="100%" viewBox="0 0 680 280" role="img" xmlns="http://www.w3.org/2000/svg" style="">
-  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">BHAD logo — Bayesian Histogram Anomaly Detection</title>
-  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Logo for the BHAD Python package: stylised histogram bars with a glowing anomaly spike, bold purple lettering, and the full package name as a subtitle.</desc>
+<svg width="680" height="240" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+  <title>BHAD — Bayesian Histogram Anomaly Detection</title>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
-    
+    <!-- Gradient for normal histogram bars -->
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <!-- Gradient for anomaly bar -->
+    <linearGradient id="anomalyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <!-- Glow filter for anomaly bar -->
+    <filter id="anomalyGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Subtle shadow for the icon group -->
+    <filter id="iconShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#4338ca" flood-opacity="0.18"/>
+    </filter>
+    <!-- Pulse ring for anomaly dot -->
+    <filter id="pulseGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+    </filter>
   </defs>
 
-  <!-- Background pill behind histogram -->
-  <rect x="60" y="30" width="260" height="200" rx="16" style="fill:rgb(238, 237, 254);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- === Icon group: histogram in a rounded container === -->
+  <g filter="url(#iconShadow)">
+    <!-- Dark rounded card behind histogram -->
+    <rect x="30" y="20" width="220" height="200" rx="20" fill="#1e1b4b"/>
+    <!-- Subtle grid lines -->
+    <line x1="50" y1="80" x2="232" y2="80" stroke="#312e81" stroke-width="0.8" stroke-dasharray="4 4"/>
+    <line x1="50" y1="120" x2="232" y2="120" stroke="#312e81" stroke-width="0.8" stroke-dasharray="4 4"/>
+    <line x1="50" y1="160" x2="232" y2="160" stroke="#312e81" stroke-width="0.8" stroke-dasharray="4 4"/>
 
-  <!-- Histogram bars — normal distribution shape -->
-  <!-- bar width = 26, gap = 6, 8 bars total, start x=82 -->
-  <!-- Heights from a rough bell: 40 60 90 130 130 90 60 40 -->
-  <rect x="82" y="170" width="26" height="40" rx="4" style="fill:rgb(175, 169, 236);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="114" y="150" width="26" height="60" rx="4" style="fill:rgb(127, 119, 221);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="146" y="120" width="26" height="90" rx="4" style="fill:rgb(127, 119, 221);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="178" y="80" width="26" height="130" rx="4" style="fill:rgb(127, 119, 221);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="210" y="80" width="26" height="130" rx="4" style="fill:rgb(127, 119, 221);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="242" y="120" width="26" height="90" rx="4" style="fill:rgb(127, 119, 221);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="274" y="150" width="26" height="60" rx="4" style="fill:rgb(175, 169, 236);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <!-- Anomaly spike — tall thin bar with accent color, off to right -->
-  <rect x="299" y="28" width="26" height="182" rx="4" opacity="0.3" style="fill:rgb(239, 159, 39);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.3;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <rect x="299" y="34" width="26" height="176" rx="4" style="fill:rgb(186, 117, 23);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+    <!-- Histogram bars — bell-shaped distribution -->
+    <!-- Bar positions: x starts at 52, width=22, gap=4 -->
+    <rect x="52"  y="172" width="22" height="24" rx="4" fill="url(#barGrad)" opacity="0.6"/>
+    <rect x="78"  y="156" width="22" height="40" rx="4" fill="url(#barGrad)" opacity="0.75"/>
+    <rect x="104" y="128" width="22" height="68" rx="4" fill="url(#barGrad)" opacity="0.88"/>
+    <rect x="130" y="92"  width="22" height="104" rx="4" fill="url(#barGrad)"/>
+    <rect x="156" y="100" width="22" height="96" rx="4" fill="url(#barGrad)" opacity="0.92"/>
+    <rect x="182" y="148" width="22" height="48" rx="4" fill="url(#barGrad)" opacity="0.7"/>
 
-  <!-- Baseline -->
-  <line x1="78" y1="212" x2="332" y2="212" stroke-width="1.5" stroke-linecap="round" opacity="0.35" style="fill:rgb(0, 0, 0);stroke:rgb(127, 119, 221);color:rgb(0, 0, 0);stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.35;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+    <!-- Anomaly bar — tall spike on the right, with glow -->
+    <rect x="212" y="40" width="22" height="156" rx="4" fill="url(#anomalyGrad)" filter="url(#anomalyGlow)"/>
 
-  <!-- Anomaly callout dot -->
-  <circle cx="312" cy="26" r="9" stroke-width="2" style="fill:rgb(250, 238, 218);stroke:rgb(133, 79, 11);color:rgb(0, 0, 0);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <circle cx="312" cy="26" r="4" style="fill:rgb(133, 79, 11);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+    <!-- Baseline -->
+    <line x1="48" y1="197" x2="238" y2="197" stroke="#6366f1" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
 
-  <!-- Anomaly label -->
-  <text font-family="'Anthropic Sans', system-ui, sans-serif" font-size="11" font-weight="400" x="330" y="22" dominant-baseline="central" style="fill:rgb(83, 74, 183);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, system-ui, sans-serif;font-size:11px;font-weight:400;text-anchor:start;dominant-baseline:central">anomaly</text>
+    <!-- Anomaly warning icon (⚠ triangle) at the top of the spike -->
+    <g transform="translate(223, 28)">
+      <!-- Outer glow ring -->
+      <circle cx="0" cy="0" r="10" fill="#f97316" filter="url(#pulseGlow)" opacity="0.5"/>
+      <!-- Warning triangle -->
+      <path d="M0-8 L7 5 L-7 5 Z" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linejoin="round"/>
+      <line x1="0" y1="-3" x2="0" y2="1" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="0" cy="3.5" r="0.9" fill="#fbbf24"/>
+    </g>
+  </g>
 
-  <!-- BHAD wordmark -->
-  <text font-family="'Anthropic Sans', system-ui, sans-serif" font-size="88" font-weight="500" letter-spacing="-2" x="370" y="160" text-anchor="start" dominant-baseline="central" style="fill:rgb(60, 52, 137);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, system-ui, sans-serif;font-size:88px;font-weight:500;text-anchor:start;dominant-baseline:central">BHAD</text>
+  <!-- === Text group === -->
+  <!-- BHAD wordmark — bold, modern -->
+  <text x="280" y="135" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="96" font-weight="800" letter-spacing="-3" fill="#1e1b4b">BHAD</text>
 
   <!-- Subtitle -->
-  <text font-family="'Anthropic Sans', system-ui, sans-serif" font-size="13" font-weight="400" x="372" y="202" text-anchor="start" dominant-baseline="central" style="fill:rgb(83, 74, 183);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, system-ui, sans-serif;font-size:13px;font-weight:400;text-anchor:start;dominant-baseline:central">Bayesian Histogram Anomaly Detection</text>
+  <text x="284" y="168" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="15.5" font-weight="500" fill="#6366f1" letter-spacing="0.5">Bayesian Histogram Anomaly Detection</text>
 
-  <!-- Python badge -->
-  <rect x="372" y="218" width="68" height="20" rx="4" style="fill:rgb(238, 237, 254);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <text font-family="'Anthropic Sans', system-ui, sans-serif" font-size="11" font-weight="400" x="406" y="228" text-anchor="middle" dominant-baseline="central" style="fill:rgb(83, 74, 183);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, system-ui, sans-serif;font-size:11px;font-weight:400;text-anchor:middle;dominant-baseline:central">Python</text>
+  <!-- Tagline -->
+  <text x="284" y="192" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#94a3b8" letter-spacing="0.3">Unsupervised · Explainable · Bayesian</text>
 </svg>
