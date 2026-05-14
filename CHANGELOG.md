@@ -60,6 +60,43 @@ If an observation is not an element of that interval consider it as relevant (w.
 - Update README to use uv for setup
 - Add more documentation
 
+## [Unreleased]
+### Performance
+
+- `BHAD._fast_bhad` and `BHAD.score_samples` now operate on a sparse CSR
+  one-hot matrix end-to-end. The previous code densified the matrix and
+  built two `O(n_samples * n_categories)` dense tiles via `np.tile`; the
+  score is now computed as a single sparse-dense matvec
+  (`df_one @ log_pred`), and `BHAD.f_mat` is stored as a sparse matrix.
+  Memory usage on `fit` and `score_samples` drops substantially.
+- `BHAD.f_mat_bayes` / `f_mat_bayes_` are now lazy `@property` accessors
+  computed on demand from the stored sparse matrices and log probabilities;
+  no eager allocation. Public API is unchanged.
+- `onehot_encoder.fit` no longer accumulates dummies with an in-loop
+  `pd.concat` (a quadratic anti-pattern). A single `pd.concat` after the
+  loop turns it linear in the number of input columns.
+- `onehot_encoder.transform` is now fully vectorised: it uses
+  `pd.Categorical.codes` to map values to global column indices and builds
+  the CSR matrix in one shot, removing the per-level `np.where` scans and
+  the Python `list.extend` over `range(n_rows)`.
+- `Discretize.log_post_pmf_nof_bins` now caches the data-independent prior
+  integration on the instance; previously the Simpson integration over the
+  gamma grid was recomputed for every numeric feature.
+- The `simpson(...)` call in `Discretize` now uses keyword arguments,
+  silencing the SciPy DeprecationWarning that was logged on every fit.
+- `Explainer.get_explanation` builds the explanation column in a Python
+  list and assigns it once at the end, instead of writing every row via
+  `df.loc[obs, "explanation"] = ...` inside the loop.
+
+### Tests / benchmarks
+
+- Added `tests/test_model/test_golden.py` and a small
+  `tests/golden_decision_function.npz` fixture so any future internal
+  refactor of the scoring path is checked against pre-refactor outputs
+  to within `rtol=1e-10`.
+- Added `scripts/bench.py` and `docs/perf.md` with before/after wall-clock
+  numbers for the main hot paths.
+
 ## [0.2.9]
 ### Integrated Discretization into BHAD
 - **New simplified API**: BHAD now includes built-in discretization, eliminating the need for sklearn Pipeline wrapper

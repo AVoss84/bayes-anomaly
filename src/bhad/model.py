@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix, issparse
 from sklearn.base import BaseEstimator, OutlierMixin
 
 import bhad.utils as utils
@@ -121,51 +122,43 @@ class BHAD(BaseEstimator, OutlierMixin):
 
         # Apply one-hot encoder to categorical -> sparse dummy matrix
         # -------------------------------------------------------------
-        # unique_categories_ = [df[var].unique().tolist() + ['infrequent'] for var in df.columns]
-        # self.enc = OneHotEncoder(handle_unknown='infrequent_if_exist', dtype = int, categories = unique_categories_)
-        self.enc = utils.onehot_encoder(
-            prefix_sep="__", verbose=self.verbose
-        )  # more flexible but much slower
-        self.df_one = self.enc.fit_transform(df).toarray()
-        assert all(
-            np.sum(self.df_one, axis=1) == df.shape[1]
-        ), "Row sums must be equal to number of features!!"
+        self.enc = utils.onehot_encoder(prefix_sep="__", verbose=self.verbose)
+        df_one = self.enc.fit_transform(df)
+        if not issparse(df_one):
+            df_one = csr_matrix(df_one)
+        self.df_one = df_one.tocsr()
         if self.verbose:
+            # Row-sum check is gated by ``verbose`` to keep the hot path lean.
+            row_sums = np.asarray(self.df_one.sum(axis=1)).ravel()
+            assert np.all(
+                row_sums == df.shape[1]
+            ), "Row sums must be equal to number of features!!"
             print("Matrix dimension after one-hot encoding:", self.df_one.shape)
         self.columns_onehot_ = self.enc.get_feature_names_out()
 
         # Prior parameters and sufficient statistics:
         # ---------------------------------------------
-        self.alphas = np.array(
-            [self.alpha] * self.df_one.shape[1]
-        )  # Dirichlet concentration parameters; aka pseudo counts
-        self.freq = self.df_one.sum(
-            axis=0
-        )  # suff. statistics of multinomial likelihood
-        self.log_pred = np.log(
-            (self.alphas + self.freq) / np.sum(self.alphas + self.freq)
-        )  # log posterior predictive probabilities for single trial / multinoulli
+        n_cats = self.df_one.shape[1]
+        self.alphas = np.full(n_cats, self.alpha, dtype=np.float64)
+        self.freq = np.asarray(self.df_one.sum(axis=0)).ravel()
+        denom = float(np.sum(self.alphas + self.freq))
+        self.log_pred = np.log((self.alphas + self.freq) / denom)
 
-        # Duplicate list of marg. freq. in an array for elementwise multiplication
-        # i.e. Repeat counts for each obs. i =1...n
-        # ---------------------------------------------------------------------------
-        # Keep frequencies for explanation later
-        a = np.tile(
-            self.freq, (self.df_shape[0], 1)
-        )  # Repeat counts for each obs. i =1...n
-        a_bayes = np.tile(self.log_pred, (self.df_shape[0], 1))
+        # The score is simply the sum of log_pred over each row's active
+        # categories. With a one-hot CSR matrix this is exactly the
+        # sparse-dense matrix-vector product:
+        #   score_i = sum_j df_one[i,j] * log_pred[j]
+        # Computing it this way avoids the previous O(n * n_cats) tiles.
+        scores_arr = np.asarray(self.df_one @ self.log_pred).ravel()
 
-        # Keep only nonzero matrix entries
-        # (via one-hot encoding matrix), i.e. freq. for respective entries
-        # Assign each obs. the overall category count
-        # -------------------------------------------------------------------
-        self.f_mat = self.df_one * np.array(a)  # keep only nonzero matrix entries
-        self.f_mat_bayes = self.df_one * np.array(a_bayes)
+        # ``f_mat`` stores the per-cell training-set count and is consumed by
+        # the Explainer. Keep it sparse to avoid dense (n, n_cats) allocations.
+        self.f_mat = self.df_one.multiply(self.freq).tocsr()
+        # ``f_mat_bayes`` was only used to compute the score above. We no
+        # longer materialise it eagerly; ``f_mat_bayes_`` exists as a lazy
+        # alias on the model for any external callers (see ``__getattr__``).
 
-        # Calculate outlier score for each row (observation),
-        # see equation (5) in [1]
-        # -----------------------------------------------------
-        out = pd.Series(self.f_mat_bayes.sum(axis=1), index=df.index)
+        out = pd.Series(scores_arr, index=df.index)
         if self.append_score:
             out = pd.concat([df, pd.DataFrame(out, columns=["outlier_score"])], axis=1)
         return out
@@ -271,17 +264,33 @@ class BHAD(BaseEstimator, OutlierMixin):
             self.scores,
             self.freq,
         )
-        self.enc_, self.df_one_, self.f_mat_, self.f_mat_bayes_ = (
+        self.enc_, self.df_one_, self.f_mat_ = (
             self.enc,
             self.df_one,
             self.f_mat,
-            self.f_mat_bayes,
         )
+        self.log_pred_ = self.log_pred  # snapshot for f_mat_bayes_ property
         self.numeric_features_, self.cat_features_ = (
             self.numeric_features,
             self.cat_features,
         )
         return self
+
+    @property
+    def f_mat_bayes(self) -> "csr_matrix":
+        """Cell-wise log posterior predictive probabilities for the last
+        scored dataset.
+
+        Computed lazily from ``self.df_one`` and ``self.log_pred`` so we never
+        materialise an (n, n_cats) dense matrix on the fit/score hot path.
+        """
+        return self.df_one.multiply(self.log_pred).tocsr()
+
+    @property
+    def f_mat_bayes_(self) -> "csr_matrix":
+        """Cell-wise log posterior predictive probabilities for the train set
+        (snapshot taken at ``fit`` time)."""
+        return self.df_one_.multiply(self.log_pred_).tocsr()
 
     def score_samples(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -318,27 +327,29 @@ class BHAD(BaseEstimator, OutlierMixin):
             print("\nScore input data.")
             print("Apply fitted one-hot encoder.")
         df = X_disc.copy()
-        self.df_one = self.enc_.transform(
-            df
-        ).toarray()  # apply fitted one-hot encoder to categorical -> sparse dummy matrix
-        assert all(
-            np.sum(self.df_one, axis=1) == df.shape[1]
-        ), "Row sums must be equal to number of features!!"
+        df_one = self.enc_.transform(df)
+        if not issparse(df_one):
+            df_one = csr_matrix(df_one)
+        self.df_one = df_one.tocsr()
+        if self.verbose:
+            row_sums = np.asarray(self.df_one.sum(axis=1)).ravel()
+            assert np.all(
+                row_sums == df.shape[1]
+            ), "Row sums must be equal to number of features!!"
 
         # Update suff. stat with abs. freq. of new data points/levels
-        self.freq_updated_ = self.freq_ + self.df_one.sum(axis=0)
-        # freq_updated = np.log(np.exp(self.freq) + self.df_one + alpha)    # multinomial-dirichlet
+        new_counts = np.asarray(self.df_one.sum(axis=0)).ravel()
+        self.freq_updated_ = self.freq_ + new_counts
 
         # Log posterior predictive probabilities for single trial / multinoulli
-        self.log_pred = np.log(
-            (self.alphas + self.freq_updated_)
-            / np.sum(self.alphas + self.freq_updated_)
-        )
-        self.f_mat = (
-            self.freq_updated_ * self.df_one
-        )  # get level specific counts for X, e.g. test set
-        f_mat_bayes = self.log_pred * self.df_one
-        self.scores = pd.Series(f_mat_bayes.sum(axis=1), index=X.index)
+        denom = float(np.sum(self.alphas + self.freq_updated_))
+        self.log_pred = np.log((self.alphas + self.freq_updated_) / denom)
+
+        # Cell-wise counts for X (e.g. test set); kept sparse for memory.
+        self.f_mat = self.df_one.multiply(self.freq_updated_).tocsr()
+        # Score = sum_j df_one[i,j] * log_pred[j] -- a single sparse-dense matvec.
+        scores_arr = np.asarray(self.df_one @ self.log_pred).ravel()
+        self.scores = pd.Series(scores_arr, index=X.index)
 
         return self.scores
 

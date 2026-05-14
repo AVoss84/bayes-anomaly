@@ -120,6 +120,10 @@ class Discretize(BaseEstimator, TransformerMixin):
         self.prior_max_M = prior_max_M
         self.eps = eps  # threshold for close-to-zero-variance
         self.make_labels = make_labels
+        # Cache for the data-independent prior integration used in
+        # log_post_pmf_nof_bins. Lazily computed on first use.
+        self._log_marg_prior_nbins_cache: Optional[Dict[int, float]] = None
+        self._log_marg_prior_nbins_cache_max_M: Optional[int] = None
 
         if self.lower and (self.lower != 0):
             if self.verbose:
@@ -135,19 +139,13 @@ class Discretize(BaseEstimator, TransformerMixin):
     def __repr__(self):
         return f"Discretize(columns = {self.columns}, nbins = {self.nof_bins}, lower = {self.lower}, k = {self.k}, round_intervals = {self.round_intervals}, eps = {self.eps}, make_labels = {self.make_labels}, prior_gamma = {self.prior_gamma}, prior_max_M = {self.prior_max_M}, verbose = {self.verbose})"
 
-    def log_post_pmf_nof_bins(self, feature_values: np.array) -> Dict[int, float]:
+    def _compute_log_marg_prior_nbins(self) -> Dict[int, float]:
+        """Integrate the gamma hyperparameter out of the joint prior via
+        Simpson's rule. The result depends only on ``prior_max_M`` and
+        ``gamma_grid`` -- not on the data -- so it can be computed once and
+        reused across features.
         """
-        Evaluate log posterior prob. measure of number of bins (over grid of supported values)
-        see paper section 'posteriors'.
-
-        Args:
-            feature_values (np.array): univariate variable values
-
-        Returns:
-            Dict[int, float]: grid of number of bin values with log-pmf values
-        """
-        # 'Integrate out' out hyperparameter gamma from joint prior via Simpson's rule:
-        log_marg_prior_nbins = {
+        return {
             m: np.log(
                 1e-10
                 + simpson(
@@ -159,11 +157,33 @@ class Discretize(BaseEstimator, TransformerMixin):
                             for g in self.gamma_grid
                         ]
                     ),
-                    self.gamma_grid,
+                    x=self.gamma_grid,
                 )
             )
             for m in range(1, self.prior_max_M, 1)
         }
+
+    def log_post_pmf_nof_bins(self, feature_values: np.array) -> Dict[int, float]:
+        """
+        Evaluate log posterior prob. measure of number of bins (over grid of supported values)
+        see paper section 'posteriors'.
+
+        Args:
+            feature_values (np.array): univariate variable values
+
+        Returns:
+            Dict[int, float]: grid of number of bin values with log-pmf values
+        """
+        # Cache the data-independent prior term so we only pay the Simpson
+        # integration once per ``Discretize`` instance instead of once per
+        # numeric feature.
+        if (
+            getattr(self, "_log_marg_prior_nbins_cache", None) is None
+            or self._log_marg_prior_nbins_cache_max_M != self.prior_max_M
+        ):
+            self._log_marg_prior_nbins_cache = self._compute_log_marg_prior_nbins()
+            self._log_marg_prior_nbins_cache_max_M = self.prior_max_M
+        log_marg_prior_nbins = self._log_marg_prior_nbins_cache
 
         # Evaluate log posterior prob. measure of number of bins (over grid of supported values):
         return {
@@ -712,20 +732,20 @@ class onehot_encoder(TransformerMixin, BaseEstimator):
         df = X[self.selected_col].copy()
         df.columns = [str(c) for c in df.columns]  # force columns to strings
 
-        for z, var in enumerate(df.columns):  # loop over columns
+        # Build per-column dummy DataFrames in a list then concat once at the
+        # end. The previous implementation called ``pd.concat`` inside the
+        # loop, which is quadratic in the number of columns because pandas
+        # reallocates the result frame on every iteration.
+        dummies: list[pd.DataFrame] = []
+        for var in df.columns:
             self.unique_categories_[var] = df[var].unique().tolist()
-            # Add 'Unknown/Others' bucket to levels for unseen levels:
             df[var] = df[var].astype(
                 CategoricalDtype(self.unique_categories_[var] + [self.oos_token_])
-            )  # add unknown catgory for out of sample levels
+            )
             one = pd.get_dummies(
                 df[var], prefix_sep=self.prefix_sep_, prefix=var, **self.kwargs
             )
-            if z > 0:
-                dummy = pd.concat([dummy, one], axis=1, sort=False)
-            else:
-                dummy = one.copy()
-
+            dummies.append(one)
             # Leave out the 'OTHERS'/oos_token_ buckets here for consistency:
             self.value2name_[var] = {
                 level_orig: dummy_name
@@ -733,6 +753,8 @@ class onehot_encoder(TransformerMixin, BaseEstimator):
                     self.unique_categories_[var], list(one.columns)[:-1]
                 )
             }
+
+        dummy = pd.concat(dummies, axis=1, sort=False, copy=False)
 
         self.dummyX_ = csr_matrix(
             dummy.values
@@ -768,37 +790,37 @@ class onehot_encoder(TransformerMixin, BaseEstimator):
         df.columns = [str(c) for c in df.columns]  # force columns to strings
         n_rows = df.shape[0]
         n_cols = len(self.columns_)
+        n_input_cols = df.shape[1]
 
-        # Pre-allocate arrays for sparse matrix construction
-        row_indices = []
-        col_indices = []
+        # For each input column we produce exactly ``n_rows`` (row, col)
+        # entries in the COO triplet -- one per observation. Pre-allocate
+        # one flat int array for all of them and fill column slices in
+        # place; this avoids Python-level ``list.extend`` and per-row
+        # ``range(n_rows)`` calls.
+        col_indices = np.empty(n_rows * n_input_cols, dtype=np.int64)
 
-        for col in df.columns:
-            raw_level_list = np.array(list(self.value2name_[col].keys()))
-            binned_values = df[col].values
+        for k, col in enumerate(df.columns):
+            categories = list(self.value2name_[col].keys())
             oos_dummy_name = col + self.prefix_sep_ + self.oos_token_
             oos_index = self.names2index_[oos_dummy_name]
 
-            # Vectorized lookup using numpy
-            mask = np.isin(binned_values, raw_level_list)
+            # Build a code -> global-column-index lookup; unknown values
+            # (Categorical code == -1) map to the OOS bucket.
+            code_to_global = np.empty(len(categories) + 1, dtype=np.int64)
+            for j, level in enumerate(categories):
+                code_to_global[j] = self.names2index_[self.value2name_[col][level]]
+            code_to_global[-1] = oos_index  # used for unknown codes (-1)
 
-            # Build lookup dict for this column
-            value_to_index = {
-                v: self.names2index_[self.value2name_[col][v]]
-                for v in self.value2name_[col]
-            }
+            codes = pd.Categorical(df[col].values, categories=categories).codes
+            # Map -1 (unknown) to the OOS slot at the end of the lookup.
+            codes_safe = np.where(codes == -1, len(categories), codes)
+            col_indices[k * n_rows : (k + 1) * n_rows] = code_to_global[codes_safe]
 
-            # Vectorized index assignment
-            col_idx = np.full(n_rows, oos_index, dtype=np.int32)
-            for val, idx in value_to_index.items():
-                col_idx[binned_values == val] = idx
-
-            row_indices.extend(range(n_rows))
-            col_indices.extend(col_idx)
-
-        # Build sparse matrix directly
-        data = np.ones(len(row_indices), dtype=np.float64)
-        return csr_matrix((data, (row_indices, col_indices)), shape=(n_rows, n_cols))
+        row_indices = np.tile(np.arange(n_rows, dtype=np.int64), n_input_cols)
+        data = np.ones(row_indices.size, dtype=np.float64)
+        return csr_matrix(
+            (data, (row_indices, col_indices)), shape=(n_rows, n_cols)
+        )
 
     def _is_same_data(self, X1: pd.DataFrame, X2: pd.DataFrame) -> bool:
         """Fast check if two DataFrames are the same (by shape and index)."""

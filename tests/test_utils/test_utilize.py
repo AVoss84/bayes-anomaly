@@ -31,6 +31,34 @@ def test_log_post_pmf_nof_bins():
         assert np.isfinite(p), f"log post. {p} is nan!"
 
 
+def test_log_post_pmf_nof_bins_cache_reused() -> None:
+    """The data-independent prior integration should be cached and reused
+    across features (calls), and invalidated when ``prior_max_M`` changes.
+    """
+    disc = utils.Discretize(nbins=None, prior_max_M=50, verbose=False)
+    rng = np.random.default_rng(0)
+
+    a = disc.log_post_pmf_nof_bins(rng.standard_normal(500))
+    assert disc._log_marg_prior_nbins_cache is not None
+    prior_obj_id = id(disc._log_marg_prior_nbins_cache)
+
+    b = disc.log_post_pmf_nof_bins(rng.standard_normal(500))
+    assert id(disc._log_marg_prior_nbins_cache) == prior_obj_id, "cache rebuilt"
+    assert set(a.keys()) == set(b.keys())
+
+    # The difference between two posterior log-pmfs cancels the (cached)
+    # prior term, so it must equal the difference in marginal log-likelihoods
+    # alone -- and therefore be finite.
+    for m in a:
+        assert np.isfinite(a[m] - b[m])
+
+    # Changing ``prior_max_M`` must invalidate the cache.
+    disc.prior_max_M = 40
+    disc.log_post_pmf_nof_bins(rng.standard_normal(500))
+    assert id(disc._log_marg_prior_nbins_cache) != prior_obj_id
+    assert disc._log_marg_prior_nbins_cache_max_M == 40
+
+
 def test_paste_basic():
     assert paste(["a", "b"], ["c", "d"]) == ["a c", "b d"]
 
@@ -159,6 +187,37 @@ def test_onehot_encoder_get_feature_names() -> None:
     enc.fit(df)
     names = enc.get_feature_names_out()
     assert len(names) > 0
+
+
+def test_onehot_encoder_transform_column_mapping() -> None:
+    """Each row's active column must be the one named after its value, and
+    unseen values must light up the OTHERS bucket. This pins the column-index
+    mapping in the vectorised transform (which the row-sum-based tests above
+    would not detect a permutation of)."""
+    df = pd.DataFrame({"x": ["a", "b", "a", "c"]})
+    enc = onehot_encoder(prefix_sep="__", verbose=False)
+    enc.fit(df)
+    M = enc.transform(df).toarray()
+
+    a_col = enc.names2index_["x__a"]
+    b_col = enc.names2index_["x__b"]
+    c_col = enc.names2index_["x__c"]
+    oos_col = enc.names2index_["x__OTHERS"]
+
+    # Row 0 -> "a"
+    assert M[0, a_col] == 1
+    assert M[0, b_col] == 0 and M[0, c_col] == 0 and M[0, oos_col] == 0
+    # Row 1 -> "b"
+    assert M[1, b_col] == 1
+    assert M[1, a_col] == 0 and M[1, c_col] == 0 and M[1, oos_col] == 0
+    # Row 3 -> "c"
+    assert M[3, c_col] == 1
+
+    # Unseen value -> OTHERS bucket.
+    M_new = enc.transform(pd.DataFrame({"x": ["zzz"]})).toarray()
+    assert M_new.shape == (1, M.shape[1])
+    assert M_new[0, oos_col] == 1
+    assert M_new[0, a_col] == 0 and M_new[0, b_col] == 0 and M_new[0, c_col] == 0
 
 
 def test_discretize_transform_new_data() -> None:

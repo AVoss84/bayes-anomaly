@@ -4,6 +4,7 @@ from math import isnan
 from copy import deepcopy
 import numpy as np
 import pandas as pd
+from scipy.sparse import issparse
 from statsmodels.distributions.empirical_distribution import ECDF
 from sklearn.utils.validation import check_is_fitted
 from tqdm.auto import tqdm
@@ -217,12 +218,19 @@ class Explainer:
         # Use statistics in f_mat
         # based on data in predict:
         # -----------------------------
-        n = self.avf.f_mat.shape[0]  # sample size current sample
-        n_ = self.avf.f_mat_.shape[
-            0
-        ]  # sample size train set; used to convert to rel. freq.
-        index_row, index_col = np.nonzero(self.avf.f_mat)
-        nz_freq = self.avf.f_mat[index_row, index_col].reshape(
+        # f_mat may be a scipy sparse matrix (memory-efficient path); convert
+        # to a dense ndarray here because the explainer relies on numpy fancy
+        # indexing (``np.nonzero``, ``arr[row, col]``) on the matrix below.
+        f_mat = self.avf.f_mat
+        if issparse(f_mat):
+            f_mat = np.asarray(f_mat.todense())
+        f_mat_train = self.avf.f_mat_
+        if issparse(f_mat_train):
+            f_mat_train = np.asarray(f_mat_train.todense())
+        n = f_mat.shape[0]  # sample size current sample
+        n_ = f_mat_train.shape[0]  # sample size train set; for rel. freq.
+        index_row, index_col = np.nonzero(f_mat)
+        nz_freq = f_mat[index_row, index_col].reshape(
             n, -1
         )  # non-zero frequencies
         ac = np.array(self.avf.df_.columns.tolist())  # feature names
@@ -296,23 +304,24 @@ class Explainer:
 
         # Over all observation (rows) in df:
         # --------------------------------------
+        # Build the explanation column once and assign at the end. The
+        # previous per-row ``df.loc[obs, "explanation"] = ...`` did a chained
+        # DataFrame write on every iteration, which dominates the runtime for
+        # large n.
+        explanations: list = [None] * n
         for obs in tqdm(range(n)):
-            names_i = orig_names_twist[obs, df_filter_twist[obs, :]].tolist()
-            values_i = df_orig_twist[obs, df_filter_twist[obs, :]].tolist()
+            row_mask = df_filter_twist[obs, :]
+            names_i = orig_names_twist[obs, row_mask].tolist()
+            values_i = df_orig_twist[obs, row_mask].tolist()
             assert len(names_i) == len(
                 values_i
             ), "Lengths of lists names_i and values_i do not match!"
-            values_str = list(map(str, values_i))
-
             if len(names_i) > nof_feat_expl:
                 names_i = names_i[:nof_feat_expl]
-                values_str = values_str[:nof_feat_expl]
-            if len(names_i) * len(values_str) > 0:
-                df_orig.loc[obs, "explanation"] = self._make_explanation_string(
-                    names_i, values_i
-                )
-            else:
-                df_orig.loc[obs, "explanation"] = None
+                values_i = values_i[:nof_feat_expl]
+            if names_i:
+                explanations[obs] = self._make_explanation_string(names_i, values_i)
+        df_orig["explanation"] = explanations
         if append:
             return df_orig
         else:

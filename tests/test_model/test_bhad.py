@@ -190,3 +190,28 @@ class TestBHADExcludeCol:
         model = BHAD(contamination=0.05, nbins=5, exclude_col=["f3"], verbose=False)
         model.fit(numeric_data)
         assert "f3" not in model.df_.columns
+
+
+class TestBHADFMatBayesProperties:
+    """Test the lazy ``f_mat_bayes`` / ``f_mat_bayes_`` accessors."""
+
+    def test_f_mat_bayes_properties(self, numeric_data: pd.DataFrame) -> None:
+        from scipy.sparse import issparse
+
+        model = BHAD(contamination=0.05, nbins=5, verbose=False)
+        model.fit(numeric_data)
+
+        # Both properties should return sparse matrices with the same shape as
+        # the one-hot matrix and consistent values.
+        assert issparse(model.f_mat_bayes_)
+        assert issparse(model.f_mat_bayes)
+        assert model.f_mat_bayes_.shape == model.df_one_.shape
+        assert model.f_mat_bayes.shape == model.df_one.shape
+
+        # Row-sum of f_mat_bayes_ is exactly the (uncentered) BHAD score
+        # (equation (5) in the paper). This is what the eager attribute used
+        # to store; the lazy property must produce the same values.
+        row_sums = np.asarray(model.f_mat_bayes_.sum(axis=1)).ravel()
+        np.testing.assert_allclose(
+            row_sums, model.scores_.to_numpy(), rtol=1e-10, atol=1e-12
+        )
